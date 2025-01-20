@@ -2,6 +2,7 @@ from typing import Any, SupportsFloat
 
 import gymnasium
 from gymnasium.core import ObsType, ActType, RenderFrame
+
 from utils import enable_gpu_dynamics
 
 
@@ -25,17 +26,22 @@ class IsaacEnv(gymnasium.Env):
         #     "display_options": DISP_FPS | DISP_RESOLUTION | DISP_MESH | DISP_DEV_MEM | DISP_HOST_MEM,
         # })
         from omni.isaac.lab.app import AppLauncher
-        self.app = AppLauncher(headless=headless).app
+        from omni.isaac.kit import SimulationApp
+
+        self.app:SimulationApp = AppLauncher(headless=headless).app
         if raw_init:
             return
         # from pegasus.simulator.logic import PegasusInterface
         # self.pg = PegasusInterface()
         from omni.isaac.lab.sim import SimulationCfg
-        from simulator.fake_world import FakeWorld
+        from sim.fake_world import FakeWorld
 
-        # sim_cfg = SimulationCfg(dt=1/250, render_interval=250/60,device="cpu")
-
-        sim_cfg = SimulationCfg(dt=1/120, render_interval=1,device="cpu")
+        sim_cfg = SimulationCfg(dt=1/250, render_interval=250/60,device="cpu")
+        sim_cfg.use_fabric = False
+        # sim_cfg.physx.enable_ccd = True
+        # sim_cfg.physx.bounce_threshold_velocity = 0.0
+        # sim_cfg.enable_scene_query_support = False
+        # sim_cfg = SimulationCfg(dt=1/120, render_interval=1,device="cpu")
         from omni.isaac.lab.sim import SimulationContext
         # self.world = SimulationContext(sim_cfg)
         # self.world = World(**kwargs)
@@ -75,7 +81,7 @@ class IsaacEnv(gymnasium.Env):
             # enable_gpu_dynamics()
         elif layout_type == "grid":
             cfg = sim_utils.UsdFileCfg(
-                usd_path=f"/home/kkona/Documents/research/PegasusSimulator/extensions/pegasus.simulator/pegasus/simulator/assets/Robots/grid_with_stand.usd")
+                usd_path=f"/home/kkona/Documents/research/drone_sim_lab/assets/worlds/grid_with_stand.usd")
             cfg.func("/World/layout", cfg)
 
 
