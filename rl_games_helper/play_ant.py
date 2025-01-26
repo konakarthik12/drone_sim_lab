@@ -22,7 +22,10 @@ env_cfg.sim.use_fabric = False
 
 # create isaac environment
 isaac_env = LocomotionEnv(env_cfg)
+from drone.drone_controller_qgroundcontrol import DroneControllerQGroundControl
 
+# create drone controller
+# drone_controller = DroneControllerQGroundControl(isaac_env)
 # wrap around environment for rl-games
 env = RlGamesVecEnvWrapper(isaac_env)
 

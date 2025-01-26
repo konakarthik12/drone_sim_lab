@@ -35,7 +35,6 @@ class LocomotionEnv(DirectRLEnv):
         self.targets = torch.tensor([1000, 0, 0], dtype=torch.float32, device=self.sim.device).repeat(
             (1, 1)
         )
-        # self.targets += self.scene.env_origins
         self.start_rotation = torch.tensor([1, 0, 0, 0], device=self.sim.device, dtype=torch.float32)
         self.up_vec = torch.tensor([0, 0, 1], dtype=torch.float32, device=self.sim.device).repeat((1, 1))
         self.heading_vec = torch.tensor([1, 0, 0], dtype=torch.float32, device=self.sim.device).repeat(
@@ -150,8 +149,8 @@ class LocomotionEnv(DirectRLEnv):
         joint_pos = self.robot.data.default_joint_pos
         joint_vel = self.robot.data.default_joint_vel
         default_root_state = self.robot.data.default_root_state
-        default_root_state[:, :3] += torch.Tensor([0, 5, 0])
-
+        # default_root_state[:, :3] += torch.Tensor([0, 5, 0])
+        default_root_state[:,1] = 5
         self.robot.write_root_link_pose_to_sim(default_root_state[:, :7])
         self.robot.write_root_com_velocity_to_sim(default_root_state[:, 7:])
         self.robot.write_joint_state_to_sim(joint_pos, joint_vel, None)
@@ -162,7 +161,13 @@ class LocomotionEnv(DirectRLEnv):
 
         self._compute_intermediate_values()
 
+    def write_scene_data_to_sim(self):
+        self.robot.write_data_to_sim()
+    def reset_scene(self):
+        self.robot.reset()
 
+    def update_scene(self, dt: float):
+        self.robot.update(dt)
 @torch.jit.script
 def compute_rewards(
     actions: torch.Tensor,

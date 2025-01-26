@@ -87,27 +87,15 @@ class DirectRLEnv(IsaacEnv, gym.Env):
         print(f"\tEnvironment step-size : {self.step_dt}")
 
         assert self.cfg.sim.render_interval >= self.cfg.decimation, "Render interval should not be smaller than decimation, this will cause multiple render calls."
-
         # generate scene
         with Timer("[INFO]: Time taken for scene creation", "scene_creation"):
             self.scene = InteractiveScene(self.cfg.scene)
             self._setup_scene()
         print("[INFO]: Scene manager: ", self.scene)
 
-        # play the simulator to activate physics handles
-        # note: this activates the physics simulation view that exposes TensorAPIs
-        # note: when started in extension mode, first call sim.reset_async() and then initialize the managers
-        if builtins.ISAAC_LAUNCHED_FROM_TERMINAL is False:
-            print("[INFO]: Starting the simulation. This may take a few seconds. Please wait...")
-            with Timer("[INFO]: Time taken for simulation start", "simulation_start"):
-                self.sim.reset()
 
-        # make sure torch is running on the correct device
-        # if "cuda" in self.device:
-        #     torch.cuda.set_device(self.device)
-
-        # allocate dictionary to store metrics
-        self.extras = {}
+        with Timer("[INFO]: Time taken for simulation start", "simulation_start"):
+            self.sim.reset()
 
         # initialize data and constants
         # -- counter for simulation steps
@@ -122,9 +110,6 @@ class DirectRLEnv(IsaacEnv, gym.Env):
 
         # setup the action and observation spaces for Gym
         self._configure_gym_env_spaces()
-
-        # -- set the framerate of the gym video recorder wrapper so that the playback speed of the produced video matches the simulation
-        self.metadata["render_fps"] = 1 / self.step_dt
 
         # print the environment information
         print("[INFO]: Completed setting up the environment...")
@@ -202,12 +187,10 @@ class DirectRLEnv(IsaacEnv, gym.Env):
         self._reset_idx()
 
         # update articulation kinematics
-        self.scene.write_data_to_sim()
-        self.sim.forward()
-        assert not self.sim.has_rtx_sensors() and not self.cfg.rerender_on_reset
+        self.write_scene_data_to_sim()
 
         # return observations
-        return self._get_observations(), self.extras
+        return self._get_observations(), {}
 
     def step(self, action: torch.Tensor) -> VecEnvStepReturn:
         """Execute one time-step of the environment's dynamics.
@@ -234,14 +217,10 @@ class DirectRLEnv(IsaacEnv, gym.Env):
             A tuple containing the observations, rewards, resets (terminated and truncated) and extras.
         """
         action = action.to(self.device)
-        assert not self.cfg.action_noise_model
 
         # process actions
         self._pre_physics_step(action)
 
-        # check if we need to do rendering within the physics loop
-        # note: checked here once to avoid multiple checks within the loop
-        is_rendering = self.sim.has_gui() or self.sim.has_rtx_sensors()
 
         # perform physics stepping
         for _ in range(self.cfg.decimation):
@@ -249,16 +228,16 @@ class DirectRLEnv(IsaacEnv, gym.Env):
             # set actions into buffers
             self._apply_action()
             # set actions into simulator
-            self.scene.write_data_to_sim()
+            self.write_scene_data_to_sim()
             # simulate
             self.sim.step(render=False)
             # render between steps only if the GUI or an RTX sensor needs it
             # note: we assume the render interval to be the shortest accepted rendering interval.
             #    If a camera needs rendering at a faster frequency, this will lead to unexpected behavior.
-            if self._sim_step_counter % round(self.cfg.sim.render_interval) == 0 and is_rendering:
+            if self._sim_step_counter % round(self.cfg.sim.render_interval) == 0:
                 self.sim.render()
             # update buffers at sim dt
-            self.scene.update(dt=self.physics_dt)
+            self.update_scene(dt=self.physics_dt)
 
         # post-step:
         # -- update env counters (used for curriculum generation)
@@ -273,15 +252,13 @@ class DirectRLEnv(IsaacEnv, gym.Env):
         if self.reset_buf:
             self._reset_idx()
             # update articulation kinematics
-            self.scene.write_data_to_sim()
-            self.sim.forward()
-            assert not self.sim.has_rtx_sensors() and not self.cfg.rerender_on_reset
+            self.write_scene_data_to_sim()
 
         # update observations
         self.obs_buf = self._get_observations()
 
         # return observations, rewards, resets and extras
-        return self.obs_buf, self.reward_buf, self.reset_terminated, self.reset_time_outs, self.extras
+        return self.obs_buf, self.reward_buf, self.reset_terminated, self.reset_time_outs, {}
 
     @staticmethod
     def seed(seed: int = -1) -> int:
@@ -339,8 +316,7 @@ class DirectRLEnv(IsaacEnv, gym.Env):
 
     def _reset_idx(self):
         """Reset the environment."""
-        self.scene.reset()
-
+        self.reset_scene()
         self.episode_length = 0
 
     """
@@ -375,3 +351,15 @@ class DirectRLEnv(IsaacEnv, gym.Env):
     def _get_dones(self) -> tuple[torch.Tensor, torch.Tensor]:
 
         raise NotImplementedError(f"Please implement the '_get_dones' method for {self.__class__.__name__}.")
+
+    def write_scene_data_to_sim(self):
+        """Write data to the simulator."""
+        pass
+
+    def update_scene(self, dt: float):
+        """Update the scene data."""
+        pass
+
+    def reset_scene(self):
+        """Reset the scene."""
+        pass
