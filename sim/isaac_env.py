@@ -69,6 +69,7 @@ class IsaacEnv(gymnasium.Env):
             cfg.func(prim_path="/World/defaultDomeLight", cfg=cfg, translation=(0.0, 0.0, 10.0))
 
         elif layout_type == "water":
+            raise NotImplementedError("Water layout not implemented yet")
             pass
             # self.pg.load_environment(ENV_ASSETS + "/fluid_test_2.usd")
             # cfg = sim_utils.UsdFileCfg(usd_path=f"{ENV_ASSETS}/fluid_test_2.usd")
