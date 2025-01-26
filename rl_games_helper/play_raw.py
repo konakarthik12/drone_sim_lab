@@ -27,9 +27,8 @@ resume_path = "/home/kkona/Documents/research/drone_sim_lab/rl_games_helper/ant_
 
 env_cfg.sim.device = "cpu"
 
-
 # create isaac environment
-isaac_env = LocomotionEnv(env_cfg)
+isaac_env = LocomotionEnv(env_cfg, render_mode=None)
 print(isaac_env.__class__.__name__)
 
 # wrap around environment for rl-games

@@ -30,18 +30,18 @@ class LocomotionEnv(DirectRLEnv):
         self.motor_effort_ratio = torch.ones_like(self.joint_gears, device=self.sim.device)
         self._joint_dof_idx, _ = self.robot.find_joints(".*")
 
-        self.potentials = torch.zeros(self.num_envs, dtype=torch.float32, device=self.sim.device)
+        self.potentials = torch.zeros(1, dtype=torch.float32, device=self.sim.device)
         self.prev_potentials = torch.zeros_like(self.potentials)
         self.targets = torch.tensor([1000, 0, 0], dtype=torch.float32, device=self.sim.device).repeat(
-            (self.num_envs, 1)
+            (1, 1)
         )
         self.targets += self.scene.env_origins
         self.start_rotation = torch.tensor([1, 0, 0, 0], device=self.sim.device, dtype=torch.float32)
-        self.up_vec = torch.tensor([0, 0, 1], dtype=torch.float32, device=self.sim.device).repeat((self.num_envs, 1))
+        self.up_vec = torch.tensor([0, 0, 1], dtype=torch.float32, device=self.sim.device).repeat((1, 1))
         self.heading_vec = torch.tensor([1, 0, 0], dtype=torch.float32, device=self.sim.device).repeat(
-            (self.num_envs, 1)
+            (1, 1)
         )
-        self.inv_start_rot = quat_conjugate(self.start_rotation).repeat((self.num_envs, 1))
+        self.inv_start_rot = quat_conjugate(self.start_rotation).repeat((1, 1))
         self.basis_vec0 = self.heading_vec.clone()
         self.basis_vec1 = self.up_vec.clone()
 
@@ -146,28 +146,26 @@ class LocomotionEnv(DirectRLEnv):
 
     def _get_dones(self) -> tuple[torch.Tensor, torch.Tensor]:
         self._compute_intermediate_values()
-        time_out = self.episode_length_buf >= self.max_episode_length - 1
+        time_out = self.episode_length >= self.max_episode_length - 1
         died = self.torso_position[:, 2] < self.cfg.termination_height
         return died, time_out
 
-    def _reset_idx(self, env_ids: torch.Tensor | None):
-        if env_ids is None or len(env_ids) == self.num_envs:
-            env_ids = self.robot._ALL_INDICES
-        self.robot.reset(env_ids)
-        super()._reset_idx(env_ids)
+    def _reset_idx(self):
+        self.robot.reset()
+        super()._reset_idx()
 
-        joint_pos = self.robot.data.default_joint_pos[env_ids]
-        joint_vel = self.robot.data.default_joint_vel[env_ids]
-        default_root_state = self.robot.data.default_root_state[env_ids]
-        default_root_state[:, :3] += self.scene.env_origins[env_ids]
+        joint_pos = self.robot.data.default_joint_pos
+        joint_vel = self.robot.data.default_joint_vel
+        default_root_state = self.robot.data.default_root_state
+        default_root_state[:, :3] += self.scene.env_origins
 
-        self.robot.write_root_link_pose_to_sim(default_root_state[:, :7], env_ids)
-        self.robot.write_root_com_velocity_to_sim(default_root_state[:, 7:], env_ids)
-        self.robot.write_joint_state_to_sim(joint_pos, joint_vel, None, env_ids)
+        self.robot.write_root_link_pose_to_sim(default_root_state[:, :7])
+        self.robot.write_root_com_velocity_to_sim(default_root_state[:, 7:])
+        self.robot.write_joint_state_to_sim(joint_pos, joint_vel, None)
 
-        to_target = self.targets[env_ids] - default_root_state[:, :3]
+        to_target = self.targets - default_root_state[:, :3]
         to_target[:, 2] = 0.0
-        self.potentials[env_ids] = -torch.norm(to_target, p=2, dim=-1) / self.cfg.sim.dt
+        self.potentials = -torch.norm(to_target, p=2, dim=-1) / self.cfg.sim.dt
 
         self._compute_intermediate_values()
 
