@@ -13,15 +13,15 @@ import omni.log
 import torch
 from omni.isaac.lab.envs.common import VecEnvObs, VecEnvStepReturn
 from omni.isaac.lab.envs.direct_rl_env_cfg import DirectRLEnvCfg
-from omni.isaac.lab.envs.ui import ViewportCameraController
 from omni.isaac.lab.envs.utils.spaces import sample_space, spec_to_gym_space
 from omni.isaac.lab.scene import InteractiveScene
-from omni.isaac.lab.sim import SimulationContext
 from omni.isaac.lab.utils.timer import Timer
 from omni.isaac.version import get_version
 
+from sim.isaac_env import IsaacEnv
 
-class DirectRLEnv(gym.Env):
+
+class DirectRLEnv(IsaacEnv, gym.Env):
     """The superclass for the direct workflow to design environments.
 
     This class implements the core functionality for reinforcement learning (RL)
@@ -46,7 +46,6 @@ class DirectRLEnv(gym.Env):
 
     """
 
-    is_vector_env: ClassVar[bool] = False
     """Whether the environment is a vectorized environment."""
     metadata: ClassVar[dict[str, Any]] = {
         "render_modes": [None, "human", "rgb_array"],
@@ -54,7 +53,7 @@ class DirectRLEnv(gym.Env):
     }
     """Metadata for the environment."""
 
-    def __init__(self, cfg: DirectRLEnvCfg, render_mode: str | None = None, **kwargs):
+    def __init__(self, cfg: DirectRLEnvCfg, **kwargs):
         """Initialize the environment.
 
         Args:
@@ -67,26 +66,16 @@ class DirectRLEnv(gym.Env):
                 since it configures the simulation context and controls the simulation.
         """
 
-        # check that the config is valid
-        cfg.validate()
         # store inputs to class
         self.cfg = cfg
-        # store the render mode
-        self.render_mode = render_mode
+
         # initialize internal variables
         self._is_closed = False
 
-        # set the seed for the environment
-        if self.cfg.seed is not None:
-            self.cfg.seed = self.seed(self.cfg.seed)
-        else:
-            omni.log.warn("Seed not set for the environment. The environment creation may not be deterministic.")
-
-        # create a simulation context to control the simulator
-        if SimulationContext.instance() is None:
-            self.sim: SimulationContext = SimulationContext(self.cfg.sim)
-        else:
-            raise RuntimeError("Simulation context already exists. Cannot create a new one.")
+        self.seed(42)
+        self.cfg.sim.render_interval = 250 / 60
+        assert self.cfg.sim.dt == 1 / 250
+        self.sim = self.world
 
         # print useful information
         print("[INFO]: Base environment:")
@@ -103,15 +92,6 @@ class DirectRLEnv(gym.Env):
             self.scene = InteractiveScene(self.cfg.scene)
             self._setup_scene()
         print("[INFO]: Scene manager: ", self.scene)
-
-        # set up camera viewport controller
-        # viewport is not available in other rendering modes so the function will throw a warning
-        # FIXME: This needs to be fixed in the future when we unify the UI functionalities even for
-        # non-rendering modes.
-        # if self.sim.render_mode >= self.sim.RenderMode.PARTIAL_RENDERING:
-        #     self.viewport_camera_controller = ViewportCameraController(self, self.cfg.viewer)
-        # else:
-        #     self.viewport_camera_controller = None
 
         # play the simulator to activate physics handles
         # note: this activates the physics simulation view that exposes TensorAPIs
@@ -254,7 +234,6 @@ class DirectRLEnv(gym.Env):
         """
         action = action.to(self.device)
         assert not self.cfg.action_noise_model
-
 
         # process actions
         self._pre_physics_step(action)

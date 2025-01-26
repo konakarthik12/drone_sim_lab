@@ -22,8 +22,8 @@ def normalize_angle(x):
 class LocomotionEnv(DirectRLEnv):
     cfg: DirectRLEnvCfg
 
-    def __init__(self, cfg: DirectRLEnvCfg, render_mode: str | None = None, **kwargs):
-        super().__init__(cfg, render_mode, **kwargs)
+    def __init__(self, cfg: DirectRLEnvCfg, **kwargs):
+        super().__init__(cfg, **kwargs)
 
         self.action_scale = self.cfg.action_scale
         self.joint_gears = torch.tensor(self.cfg.joint_gears, dtype=torch.float32, device=self.sim.device)
@@ -35,7 +35,7 @@ class LocomotionEnv(DirectRLEnv):
         self.targets = torch.tensor([1000, 0, 0], dtype=torch.float32, device=self.sim.device).repeat(
             (1, 1)
         )
-        self.targets += self.scene.env_origins
+        # self.targets += self.scene.env_origins
         self.start_rotation = torch.tensor([1, 0, 0, 0], device=self.sim.device, dtype=torch.float32)
         self.up_vec = torch.tensor([0, 0, 1], dtype=torch.float32, device=self.sim.device).repeat((1, 1))
         self.heading_vec = torch.tensor([1, 0, 0], dtype=torch.float32, device=self.sim.device).repeat(
@@ -47,13 +47,6 @@ class LocomotionEnv(DirectRLEnv):
 
     def _setup_scene(self):
         self.robot = Articulation(self.cfg.robot)
-        # add ground plane
-        self.cfg.terrain.num_envs = self.scene.cfg.num_envs
-        self.cfg.terrain.env_spacing = self.scene.cfg.env_spacing
-        self.terrain = self.cfg.terrain.class_type(self.cfg.terrain)
-        # clone, filter, and replicate
-        self.scene.clone_environments(copy_from_source=False)
-        self.scene.filter_collisions(global_prim_paths=[self.cfg.terrain.prim_path])
         # add articulation to scene
         self.scene.articulations["robot"] = self.robot
         # add lights
@@ -157,7 +150,7 @@ class LocomotionEnv(DirectRLEnv):
         joint_pos = self.robot.data.default_joint_pos
         joint_vel = self.robot.data.default_joint_vel
         default_root_state = self.robot.data.default_root_state
-        default_root_state[:, :3] += self.scene.env_origins
+        default_root_state[:, :3] += torch.Tensor([0, 5, 0])
 
         self.robot.write_root_link_pose_to_sim(default_root_state[:, :7])
         self.robot.write_root_com_velocity_to_sim(default_root_state[:, 7:])
@@ -197,7 +190,7 @@ def compute_rewards(
     up_reward = torch.where(up_proj > 0.93, up_reward + up_weight, up_reward)
 
     # energy penalty for movement
-    actions_cost = torch.sum(actions**2, dim=-1)
+    actions_cost = torch.sum(actions ** 2, dim=-1)
     electricity_cost = torch.sum(
         torch.abs(actions * dof_vel * dof_vel_scale) * motor_effort_ratio.unsqueeze(0),
         dim=-1,
@@ -211,13 +204,13 @@ def compute_rewards(
     progress_reward = potentials - prev_potentials
 
     total_reward = (
-        progress_reward
-        + alive_reward
-        + up_reward
-        + heading_reward
-        - actions_cost_scale * actions_cost
-        - energy_cost_scale * electricity_cost
-        - dof_at_limit_cost
+            progress_reward
+            + alive_reward
+            + up_reward
+            + heading_reward
+            - actions_cost_scale * actions_cost
+            - energy_cost_scale * electricity_cost
+            - dof_at_limit_cost
     )
     # adjust reward for fallen agents
     total_reward = torch.where(reset_terminated, torch.ones_like(total_reward) * death_cost, total_reward)
@@ -226,20 +219,20 @@ def compute_rewards(
 
 @torch.jit.script
 def compute_intermediate_values(
-    targets: torch.Tensor,
-    torso_position: torch.Tensor,
-    torso_rotation: torch.Tensor,
-    velocity: torch.Tensor,
-    ang_velocity: torch.Tensor,
-    dof_pos: torch.Tensor,
-    dof_lower_limits: torch.Tensor,
-    dof_upper_limits: torch.Tensor,
-    inv_start_rot: torch.Tensor,
-    basis_vec0: torch.Tensor,
-    basis_vec1: torch.Tensor,
-    potentials: torch.Tensor,
-    prev_potentials: torch.Tensor,
-    dt: float,
+        targets: torch.Tensor,
+        torso_position: torch.Tensor,
+        torso_rotation: torch.Tensor,
+        velocity: torch.Tensor,
+        ang_velocity: torch.Tensor,
+        dof_pos: torch.Tensor,
+        dof_lower_limits: torch.Tensor,
+        dof_upper_limits: torch.Tensor,
+        inv_start_rot: torch.Tensor,
+        basis_vec0: torch.Tensor,
+        basis_vec1: torch.Tensor,
+        potentials: torch.Tensor,
+        prev_potentials: torch.Tensor,
+        dt: float,
 ):
     to_target = targets - torso_position
     to_target[:, 2] = 0.0

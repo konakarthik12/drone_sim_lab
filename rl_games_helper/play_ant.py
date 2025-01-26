@@ -1,19 +1,17 @@
-from omni.isaac.lab.app import AppLauncher
+from sim.app import init_app, get_app
 
-app_launcher = AppLauncher()
-simulation_app = app_launcher.app
-"""Rest everything follows."""
-
+init_app(headless=False)
+app = get_app()
 from ant_env_cfg import AntEnvCfg
-
 import omni.isaac.lab_tasks  # noqa: F401
 from omni.isaac.lab_tasks.utils import load_cfg_from_registry
 from rl_games_raw import RlGamesVecEnvWrapper
 
-from rl_games_helper import Agent
 from locomotion_env import LocomotionEnv
-
 task_name = "Isaac-Ant-Direct-v0"
+resume_path = "/home/kkona/Documents/research/drone_sim_lab/rl_games_helper/ant_direct_policy.pth"
+
+import omni.isaac.lab_tasks  # noqa: F401
 
 """Play with RL-Games agent."""
 
@@ -21,21 +19,16 @@ env_cfg = AntEnvCfg()
 env_cfg.sim.device = "cpu"
 env_cfg.scene.num_envs = 1
 env_cfg.sim.use_fabric = False
-agent_cfg = load_cfg_from_registry(task_name, "rl_games_cfg_entry_point")
-
-resume_path = "/home/kkona/Documents/research/drone_sim_lab/rl_games_helper/ant_direct_policy.pth"
-
-env_cfg.sim.device = "cpu"
 
 # create isaac environment
-isaac_env = LocomotionEnv(env_cfg, render_mode=None)
-print(isaac_env.__class__.__name__)
+isaac_env = LocomotionEnv(env_cfg)
 
 # wrap around environment for rl-games
 env = RlGamesVecEnvWrapper(isaac_env)
 
 
-# agent = get_rl_games_agent(agent_cfg, resume_path)
+from agent import Agent
+agent_cfg = load_cfg_from_registry(task_name, "rl_games_cfg_entry_point")
 
 agent = Agent(agent_cfg, resume_path)
 
@@ -47,7 +40,7 @@ agent.init(obs)
 # note: We simplified the logic in rl-games player.py (:func:`BasePlayer.run()`) function in an
 #   attempt to have complete control over environment stepping. However, this removes other
 #   operations such as masking that is used for multi-agent learning by RL-Games.
-while simulation_app.is_running():
+while app.is_running():
 
     actions = agent.get_action(obs)
     # env stepping
@@ -60,4 +53,4 @@ while simulation_app.is_running():
 env.close()
 
 # close sim app
-simulation_app.close()
+app.close()
