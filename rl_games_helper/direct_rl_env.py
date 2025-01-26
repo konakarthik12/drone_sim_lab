@@ -1,8 +1,3 @@
-# Copyright (c) 2022-2024, The Isaac Lab Project Developers.
-# All rights reserved.
-#
-# SPDX-License-Identifier: BSD-3-Clause
-
 from __future__ import annotations
 
 import builtins
@@ -413,40 +408,6 @@ class DirectRLEnv(gym.Env):
             # update closing status
             self._is_closed = True
 
-    # """
-    # Operations - Debug Visualization.
-    # """
-    #
-    # def set_debug_vis(self, debug_vis: bool) -> bool:
-    #     """Toggles the environment debug visualization.
-    #
-    #     Args:
-    #         debug_vis: Whether to visualize the environment debug visualization.
-    #
-    #     Returns:
-    #         Whether the debug visualization was successfully set. False if the environment
-    #         does not support debug visualization.
-    #     """
-    #     # check if debug visualization is supported
-    #     if not self.has_debug_vis_implementation:
-    #         return False
-    #     # toggle debug visualization objects
-    #     self._set_debug_vis_impl(debug_vis)
-    #     # toggle debug visualization handles
-    #     if debug_vis:
-    #         # create a subscriber for the post update event if it doesn't exist
-    #         if self._debug_vis_handle is None:
-    #             app_interface = omni.kit.app.get_app_interface()
-    #             self._debug_vis_handle = app_interface.get_post_update_event_stream().create_subscription_to_pop(
-    #                 lambda event, obj=weakref.proxy(self): obj._debug_vis_callback(event)
-    #             )
-    #     else:
-    #         # remove the subscriber if it exists
-    #         if self._debug_vis_handle is not None:
-    #             self._debug_vis_handle.unsubscribe()
-    #             self._debug_vis_handle = None
-    #     # return success
-    #     return True
 
     """
     Helper functions.
@@ -497,21 +458,10 @@ class DirectRLEnv(gym.Env):
         self.scene.reset(env_ids)
 
         assert not self.cfg.events
-        # apply events such as randomization for environments that need a reset
-        # if self.cfg.events:
-        #     if "reset" in self.event_manager.available_modes:
-        #         env_step_count = self._sim_step_counter // self.cfg.decimation
-        #         self.event_manager.apply(mode="reset", env_ids=env_ids, global_env_step_count=env_step_count)
 
         assert not self.cfg.action_noise_model
         assert not self.cfg.observation_noise_model
-        # reset noise models
-        # if self.cfg.action_noise_model:
-        #     self._action_noise_model.reset(env_ids)
-        # if self.cfg.observation_noise_model:
-        #     self._observation_noise_model.reset(env_ids)
 
-        # reset the episode length buffer
         self.episode_length_buf[env_ids] = 0
 
     """
@@ -519,83 +469,38 @@ class DirectRLEnv(gym.Env):
     """
 
     def _setup_scene(self):
-        """Setup the scene for the environment.
 
-        This function is responsible for creating the scene objects and setting up the scene for the environment.
-        The scene creation can happen through :class:`omni.isaac.lab.scene.InteractiveSceneCfg` or through
-        directly creating the scene objects and registering them with the scene manager.
-
-        We leave the implementation of this function to the derived classes. If the environment does not require
-        any explicit scene setup, the function can be left empty.
-        """
         pass
 
     @abstractmethod
     def _pre_physics_step(self, actions: torch.Tensor):
-        """Pre-process actions before stepping through the physics.
 
-        This function is responsible for pre-processing the actions before stepping through the physics.
-        It is called before the physics stepping (which is decimated).
-
-        Args:
-            actions: The actions to apply on the environment. Shape is (num_envs, action_dim).
-        """
         raise NotImplementedError(f"Please implement the '_pre_physics_step' method for {self.__class__.__name__}.")
 
     @abstractmethod
     def _apply_action(self):
-        """Apply actions to the simulator.
 
-        This function is responsible for applying the actions to the simulator. It is called at each
-        physics time-step.
-        """
         raise NotImplementedError(f"Please implement the '_apply_action' method for {self.__class__.__name__}.")
 
     @abstractmethod
     def _get_observations(self) -> VecEnvObs:
-        """Compute and return the observations for the environment.
 
-        Returns:
-            The observations for the environment.
-        """
         raise NotImplementedError(f"Please implement the '_get_observations' method for {self.__class__.__name__}.")
 
     def _get_states(self) -> VecEnvObs | None:
-        """Compute and return the states for the environment.
 
-        The state-space is used for asymmetric actor-critic architectures. It is configured
-        using the :attr:`DirectRLEnvCfg.state_space` parameter.
-
-        Returns:
-            The states for the environment. If the environment does not have a state-space, the function
-            returns a None.
-        """
         return None  # noqa: R501
 
     @abstractmethod
     def _get_rewards(self) -> torch.Tensor:
-        """Compute and return the rewards for the environment.
 
-        Returns:
-            The rewards for the environment. Shape is (num_envs,).
-        """
         raise NotImplementedError(f"Please implement the '_get_rewards' method for {self.__class__.__name__}.")
 
     @abstractmethod
     def _get_dones(self) -> tuple[torch.Tensor, torch.Tensor]:
-        """Compute and return the done flags for the environment.
 
-        Returns:
-            A tuple containing the done flags for termination and time-out.
-            Shape of individual tensors is (num_envs,).
-        """
         raise NotImplementedError(f"Please implement the '_get_dones' method for {self.__class__.__name__}.")
 
     def _set_debug_vis_impl(self, debug_vis: bool):
-        """Set debug visualization into visualization objects.
 
-        This function is responsible for creating the visualization objects if they don't exist
-        and input ``debug_vis`` is True. If the visualization objects exist, the function should
-        set their visibility into the stage.
-        """
         raise NotImplementedError(f"Debug visualization is not implemented for {self.__class__.__name__}.")
