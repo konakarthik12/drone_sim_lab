@@ -24,8 +24,8 @@ class IsaacEnv(gymnasium.Env):
         # })
         from omni.isaac.lab.app import AppLauncher
         from omni.isaac.kit import SimulationApp
-        from sim.app import app
-        self.app: SimulationApp = app
+        from sim.app import get_app
+        self.app: SimulationApp = get_app()
 
 
         from omni.isaac.lab.sim import SimulationCfg
