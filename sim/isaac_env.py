@@ -46,10 +46,9 @@ class IsaacEnv(gymnasium.Env):
         from omni.isaac.lab.sim import SimulationContext
         # self.world = SimulationContext(sim_cfg)
         # self.world = World(**kwargs)
-        from pegasus.simulator.logic import PegasusInterface
-        self.pg = PegasusInterface()
+
         self.world= FakeWorld(sim_cfg)
-        self.pg._world = self.world
+
         self.load_layout(layout_type)
 
     def get_world_settings(self):

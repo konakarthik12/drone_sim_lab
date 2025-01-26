@@ -17,7 +17,9 @@ class DroneControllerQGroundControl:
         log.info("Initializing Multirotor and Objects")
 
         self.world = parent_env.world
-        self.pg = parent_env.pg
+        from pegasus.simulator.logic import PegasusInterface
+        self.pg = PegasusInterface()
+        self.pg._world = self.world
         self.init_pos = init_pos
 
         self._config_multirotor = MultirotorConfig()
