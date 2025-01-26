@@ -8,7 +8,8 @@ from utils import enable_gpu_dynamics
 
 class IsaacEnv(gymnasium.Env):
     def __init__(self, headless=True, layout_type="air", raw_init=False, **kwargs):
-
+        # TODO: Fix headless mode
+        assert not headless, "Headless mode is not working for some reason"
         # from isaacsim import SimulationApp
         #
         # DISP_FPS = 1 << 0
