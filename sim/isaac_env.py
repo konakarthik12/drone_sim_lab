@@ -7,11 +7,7 @@ from utils import enable_gpu_dynamics
 
 
 class IsaacEnv(gymnasium.Env):
-    def __init__(self, headless=True, layout_type="air", raw_init=False, **kwargs):
-        # TODO: Fix headless mode
-        assert not headless, "Headless mode is not working for some reason"
-        # from isaacsim import SimulationApp
-        #
+    def __init__(self, layout_type="air"):
         # DISP_FPS = 1 << 0
         # # DISP_AXIS = 1 << 1
         # DISP_RESOLUTION = 1 << 3
@@ -20,7 +16,7 @@ class IsaacEnv(gymnasium.Env):
         # # DISP_PROGRESS = 1 << 11
         # DISP_DEV_MEM = 1 << 13
         # DISP_HOST_MEM = 1 << 14
-        self.headless = headless
+        # self.headless = headless
         # self.app = SimulationApp({
         #     "headless": headless,
         #     "anti_aliasing": 0,
@@ -28,16 +24,14 @@ class IsaacEnv(gymnasium.Env):
         # })
         from omni.isaac.lab.app import AppLauncher
         from omni.isaac.kit import SimulationApp
+        from sim.app import app
+        self.app: SimulationApp = app
 
-        self.app:SimulationApp = AppLauncher(headless=headless).app
-        if raw_init:
-            return
-        # from pegasus.simulator.logic import PegasusInterface
-        # self.pg = PegasusInterface()
+
         from omni.isaac.lab.sim import SimulationCfg
         from sim.fake_world import FakeWorld
 
-        sim_cfg = SimulationCfg(dt=1/250, render_interval=250/60,device="cpu")
+        sim_cfg = SimulationCfg(dt=1 / 250, render_interval=250 / 60, device="cpu")
         sim_cfg.use_fabric = False
         # sim_cfg.physx.enable_ccd = True
         # sim_cfg.physx.bounce_threshold_velocity = 0.0
@@ -47,12 +41,13 @@ class IsaacEnv(gymnasium.Env):
         # self.world = SimulationContext(sim_cfg)
         # self.world = World(**kwargs)
 
-        self.world= FakeWorld(sim_cfg)
+        self.world = FakeWorld(sim_cfg)
 
         self.load_layout(layout_type)
 
     def get_world_settings(self):
         return {}
+
     def load_layout(self, layout_type):
         # from pegasus_custom.params import ENV_ASSETS
         import omni.isaac.lab.sim as sim_utils
@@ -84,8 +79,6 @@ class IsaacEnv(gymnasium.Env):
                 usd_path=f"/home/kkona/Documents/research/drone_sim_lab/assets/worlds/grid_with_stand.usd")
             cfg.func("/World/layout", cfg)
 
-
-
     def reset(
             self,
             *,
@@ -99,8 +92,8 @@ class IsaacEnv(gymnasium.Env):
     def step(
             self, action: ActType
     ) -> tuple[ObsType, SupportsFloat, bool, bool, dict[str, Any]]:
-        self.world.step(render=not self.headless)
+        self.world.step(render=True)
         return {}, 0.0, False, False, {}
 
-    def render(self) -> RenderFrame | list[RenderFrame] | None:
-        return self.world.render(mode="human")
+    # def render(self) -> RenderFrame | list[RenderFrame] | None:
+    #     return self.world.render(mode="human")
