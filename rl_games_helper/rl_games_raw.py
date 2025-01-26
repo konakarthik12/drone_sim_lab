@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 import gym.spaces  # needed for rl-games incompatibility: https://github.com/Denys88/rl_games/issues/261
-import gymnasium
 import torch
+from omni.isaac.lab.envs import ManagerBasedRLEnv
 from rl_games.common import env_configurations
 from rl_games.common import vecenv
 from rl_games.common.vecenv import IVecEnv
 
-from omni.isaac.lab.envs import DirectRLEnv, ManagerBasedRLEnv, VecEnvObs
+from direct_rl_env import DirectRLEnv
 
 
 class RlGamesVecEnvWrapper(IVecEnv):

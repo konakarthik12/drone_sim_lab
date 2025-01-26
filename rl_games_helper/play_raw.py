@@ -4,25 +4,23 @@ app_launcher = AppLauncher()
 simulation_app = app_launcher.app
 """Rest everything follows."""
 
-from drone.drone_controller_qgroundcontrol import DroneControllerQGroundControl
-
-from omni.isaac.lab_tasks.direct.ant.ant_env import AntEnv, AntEnvCfg
-from omni.isaac.lab_tasks.direct.locomotion.locomotion_env import LocomotionEnv
-
-import torch
+from ant_env_cfg import AntEnvCfg
 
 import omni.isaac.lab_tasks  # noqa: F401
-from omni.isaac.lab_tasks.utils import load_cfg_from_registry, parse_env_cfg
+from omni.isaac.lab_tasks.utils import load_cfg_from_registry
 from rl_games_raw import RlGamesVecEnvWrapper
 
 from rl_games_helper import Agent
-from typing import cast
+from locomotion_env import LocomotionEnv
 
 task_name = "Isaac-Ant-Direct-v0"
 
 """Play with RL-Games agent."""
-# parse env configuration
-env_cfg = cast(AntEnvCfg, parse_env_cfg(task_name, device="cpu", num_envs=1, use_fabric=False))
+
+env_cfg = AntEnvCfg()
+env_cfg.sim.device = "cpu"
+env_cfg.scene.num_envs = 1
+env_cfg.sim.use_fabric = False
 agent_cfg = load_cfg_from_registry(task_name, "rl_games_cfg_entry_point")
 
 resume_path = "/home/kkona/Documents/research/drone_sim_lab/rl_games_helper/ant_direct_policy.pth"
