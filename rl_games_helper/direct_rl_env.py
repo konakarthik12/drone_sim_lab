@@ -65,6 +65,7 @@ class DirectRLEnv(IsaacEnv, gym.Env):
             RuntimeError: If a simulation context already exists. The environment must always create one
                 since it configures the simulation context and controls the simulation.
         """
+        super().__init__(layout_type="grid")
 
         # store inputs to class
         self.cfg = cfg
