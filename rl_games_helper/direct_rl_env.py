@@ -275,7 +275,7 @@ class DirectRLEnv(gym.Env):
             # render between steps only if the GUI or an RTX sensor needs it
             # note: we assume the render interval to be the shortest accepted rendering interval.
             #    If a camera needs rendering at a faster frequency, this will lead to unexpected behavior.
-            if self._sim_step_counter % self.cfg.sim.render_interval == 0 and is_rendering:
+            if self._sim_step_counter % round(self.cfg.sim.render_interval) == 0 and is_rendering:
                 self.sim.render()
             # update buffers at sim dt
             self.scene.update(dt=self.physics_dt)
