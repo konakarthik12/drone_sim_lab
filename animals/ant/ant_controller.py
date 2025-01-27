@@ -7,11 +7,11 @@ class AntController:
 
         self.world = parent_env.world
 
-        crab_path = "/home/kkona/Documents/research/drone_sim_lab/assets/animals/ant.usd"
+        ant_path = "/home/kkona/Documents/research/drone_sim_lab/assets/animals/ant_instanceable.usd"
         prim_path = "/World/ant"
         import omni.isaac.core.utils.stage as stage_utils
 
-        stage_utils.add_reference_to_stage(crab_path, prim_path)
+        stage_utils.add_reference_to_stage(ant_path, prim_path)
         self.init_pose = [6, 0, 0.3]
         self.robot = Articulation(prim_path=prim_path,
                                   name="ant",
