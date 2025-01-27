@@ -13,16 +13,17 @@ from omni.isaac.core.utils.torch.rotations import compute_heading_and_up, comput
 import omni.isaac.lab.sim as sim_utils
 from omni.isaac.lab.assets import Articulation
 from direct_rl_env import DirectRLEnv, DirectRLEnvCfg
+from rl_games_helper.ant_env_cfg import AntEnvCfg
 
 
-def normalize_angle(x):
+def normalize_angle(x: torch.Tensor) -> torch.Tensor:
     return torch.atan2(torch.sin(x), torch.cos(x))
 
 
 class LocomotionEnv(DirectRLEnv):
-    cfg: DirectRLEnvCfg
+    cfg: AntEnvCfg
 
-    def __init__(self, cfg: DirectRLEnvCfg, **kwargs):
+    def __init__(self, cfg: AntEnvCfg, **kwargs):
         super().__init__(cfg, **kwargs)
 
         self.action_scale = self.cfg.action_scale
@@ -32,15 +33,11 @@ class LocomotionEnv(DirectRLEnv):
 
         self.potentials = torch.zeros(1, dtype=torch.float32, device=self.sim.device)
         self.prev_potentials = torch.zeros_like(self.potentials)
-        self.targets = torch.tensor([1000, 0, 0], dtype=torch.float32, device=self.sim.device).repeat(
-            (1, 1)
-        )
+        self.targets = torch.tensor([1000, 0, 0], dtype=torch.float32, device=self.sim.device)
         self.start_rotation = torch.tensor([1, 0, 0, 0], device=self.sim.device, dtype=torch.float32)
-        self.up_vec = torch.tensor([0, 0, 1], dtype=torch.float32, device=self.sim.device).repeat((1, 1))
-        self.heading_vec = torch.tensor([1, 0, 0], dtype=torch.float32, device=self.sim.device).repeat(
-            (1, 1)
-        )
-        self.inv_start_rot = quat_conjugate(self.start_rotation).repeat((1, 1))
+        self.up_vec = torch.tensor([0, 0, 1], dtype=torch.float32, device=self.sim.device)
+        self.heading_vec = torch.tensor([1, 0, 0], dtype=torch.float32, device=self.sim.device)
+        self.inv_start_rot = quat_conjugate(self.start_rotation)
         self.basis_vec0 = self.heading_vec.clone()
         self.basis_vec1 = self.up_vec.clone()
 
@@ -60,9 +57,9 @@ class LocomotionEnv(DirectRLEnv):
         self.robot.set_joint_effort_target(forces, joint_ids=self._joint_dof_idx)
 
     def _compute_intermediate_values(self):
-        self.torso_position, self.torso_rotation = self.robot.data.root_link_pos_w, self.robot.data.root_link_quat_w
-        self.velocity, self.ang_velocity = self.robot.data.root_com_lin_vel_w, self.robot.data.root_com_ang_vel_w
-        self.dof_pos, self.dof_vel = self.robot.data.joint_pos, self.robot.data.joint_vel
+        self.torso_position, self.torso_rotation = self.robot.data.root_link_pos_w.squeeze(), self.robot.data.root_link_quat_w.squeeze()
+        self.velocity, self.ang_velocity = self.robot.data.root_com_lin_vel_w.squeeze(), self.robot.data.root_com_ang_vel_w.squeeze()
+        self.dof_pos, self.dof_vel = self.robot.data.joint_pos.squeeze(), self.robot.data.joint_vel.squeeze()
 
         (
             self.up_proj,
@@ -98,20 +95,20 @@ class LocomotionEnv(DirectRLEnv):
     def _get_observations(self) -> dict:
         obs = torch.cat(
             (
-                self.torso_position[:, 2].view(-1, 1),
+                self.torso_position[2].unsqueeze(0),
                 self.vel_loc,
-                self.angvel_loc * self.cfg.angular_velocity_scale,
-                normalize_angle(self.yaw).unsqueeze(-1),
-                normalize_angle(self.roll).unsqueeze(-1),
-                normalize_angle(self.angle_to_target).unsqueeze(-1),
-                self.up_proj.unsqueeze(-1),
-                self.heading_proj.unsqueeze(-1),
+                (self.angvel_loc * self.cfg.angular_velocity_scale),
+                normalize_angle(self.yaw),
+                normalize_angle(self.roll),
+                normalize_angle(self.angle_to_target),
+                self.up_proj,
+                self.heading_proj,
                 self.dof_pos_scaled,
                 self.dof_vel * self.cfg.dof_vel_scale,
-                self.actions,
+                self.actions.squeeze(0),
             ),
             dim=-1,
-        )
+        ).unsqueeze(0)
         observations = {"policy": obs}
         return observations
 
@@ -136,10 +133,10 @@ class LocomotionEnv(DirectRLEnv):
         )
         return total_reward
 
-    def _get_dones(self) -> tuple[torch.Tensor, torch.Tensor]:
+    def _get_dones(self) -> tuple[bool, bool]:
         self._compute_intermediate_values()
         time_out = self.episode_length >= self.max_episode_length - 1
-        died = self.torso_position[:, 2] < self.cfg.termination_height
+        died = self.torso_position[2] < self.cfg.termination_height
         return died, time_out
 
     def _reset_idx(self):
@@ -150,7 +147,7 @@ class LocomotionEnv(DirectRLEnv):
         joint_vel = self.robot.data.default_joint_vel
         default_root_state = self.robot.data.default_root_state
         # default_root_state[:, :3] += torch.Tensor([0, 5, 0])
-        default_root_state[:,1] = 5
+        default_root_state[:, 1] = 5
         self.robot.write_root_link_pose_to_sim(default_root_state[:, :7])
         self.robot.write_root_com_velocity_to_sim(default_root_state[:, 7:])
         self.robot.write_joint_state_to_sim(joint_pos, joint_vel, None)
@@ -163,29 +160,32 @@ class LocomotionEnv(DirectRLEnv):
 
     def write_scene_data_to_sim(self):
         self.robot.write_data_to_sim()
+
     def reset_scene(self):
         self.robot.reset()
 
     def update_scene(self, dt: float):
         self.robot.update(dt)
+
+
 @torch.jit.script
 def compute_rewards(
-    actions: torch.Tensor,
-    reset_terminated: torch.Tensor,
-    up_weight: float,
-    heading_weight: float,
-    heading_proj: torch.Tensor,
-    up_proj: torch.Tensor,
-    dof_vel: torch.Tensor,
-    dof_pos_scaled: torch.Tensor,
-    potentials: torch.Tensor,
-    prev_potentials: torch.Tensor,
-    actions_cost_scale: float,
-    energy_cost_scale: float,
-    dof_vel_scale: float,
-    death_cost: float,
-    alive_reward_scale: float,
-    motor_effort_ratio: torch.Tensor,
+        actions: torch.Tensor,
+        reset_terminated: torch.Tensor,
+        up_weight: float,
+        heading_weight: float,
+        heading_proj: torch.Tensor,
+        up_proj: torch.Tensor,
+        dof_vel: torch.Tensor,
+        dof_pos_scaled: torch.Tensor,
+        potentials: torch.Tensor,
+        prev_potentials: torch.Tensor,
+        actions_cost_scale: float,
+        energy_cost_scale: float,
+        dof_vel_scale: float,
+        death_cost: float,
+        alive_reward_scale: float,
+        motor_effort_ratio: torch.Tensor,
 ):
     heading_weight_tensor = torch.ones_like(heading_proj) * heading_weight
     heading_reward = torch.where(heading_proj > 0.8, heading_weight_tensor, heading_weight * heading_proj / 0.8)
@@ -222,7 +222,7 @@ def compute_rewards(
     return total_reward
 
 
-@torch.jit.script
+# @torch.jit.script
 def compute_intermediate_values(
         targets: torch.Tensor,
         torso_position: torch.Tensor,
@@ -240,20 +240,20 @@ def compute_intermediate_values(
         dt: float,
 ):
     to_target = targets - torso_position
-    to_target[:, 2] = 0.0
+    to_target[2] = 0.0
 
     torso_quat, up_proj, heading_proj, up_vec, heading_vec = compute_heading_and_up(
-        torso_rotation, inv_start_rot, to_target, basis_vec0, basis_vec1, 2
+        torso_rotation.unsqueeze(0), inv_start_rot.unsqueeze(0), to_target.unsqueeze(0), basis_vec0.unsqueeze(0),
+        basis_vec1.unsqueeze(0), 2
     )
-
+    torso_quat = torso_quat.squeeze()
     vel_loc, angvel_loc, roll, pitch, yaw, angle_to_target = compute_rot(
-        torso_quat, velocity, ang_velocity, targets, torso_position
+        torso_quat.unsqueeze(0), velocity.unsqueeze(0), ang_velocity.unsqueeze(0), targets.unsqueeze(0),
+        torso_position.unsqueeze(0)
     )
 
     dof_pos_scaled = torch_utils.maths.unscale(dof_pos, dof_lower_limits, dof_upper_limits)
 
-    to_target = targets - torso_position
-    to_target[:, 2] = 0.0
     prev_potentials[:] = potentials
     potentials = -torch.norm(to_target, p=2, dim=-1) / dt
 
@@ -262,8 +262,8 @@ def compute_intermediate_values(
         heading_proj,
         up_vec,
         heading_vec,
-        vel_loc,
-        angvel_loc,
+        vel_loc.squeeze(0),
+        angvel_loc.squeeze(0),
         roll,
         pitch,
         yaw,
