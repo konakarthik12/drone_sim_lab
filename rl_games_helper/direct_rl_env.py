@@ -8,8 +8,7 @@ from typing import Any, ClassVar
 
 import gymnasium as gym
 import omni.isaac.core.utils.torch as torch_utils
-import omni.kit.app
-import omni.log
+
 import torch
 from omni.isaac.lab.envs.common import VecEnvObs, VecEnvStepReturn
 from omni.isaac.lab.envs.direct_rl_env_cfg import DirectRLEnvCfg
@@ -89,9 +88,7 @@ class DirectRLEnv(IsaacEnv, gym.Env):
         assert self.cfg.sim.render_interval >= self.cfg.decimation, "Render interval should not be smaller than decimation, this will cause multiple render calls."
         # generate scene
         with Timer("[INFO]: Time taken for scene creation", "scene_creation"):
-            self.scene = InteractiveScene(self.cfg.scene)
             self._setup_scene()
-        print("[INFO]: Scene manager: ", self.scene)
 
 
         with Timer("[INFO]: Time taken for simulation start", "simulation_start"):
