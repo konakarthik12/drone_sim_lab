@@ -7,9 +7,11 @@ def enable_gpu_dynamics():
     physx_interface.overwrite_gpu_setting(1)
 
 
-def add_gamepad_callback(callback, gamepad_id = 0):
-    import carb
-    import omni.kit
+def add_gamepad_callback(callback, gamepad_id=0):
+    import carb.settings
+    import carb.input
+    import omni.appwindow
+
     carb_settings_iface = carb.settings.get_settings()
     carb_settings_iface.set_bool("/persistent/app/omniverse/gamepadCameraControl", False)
     carb_input = carb.input.acquire_input_interface()
@@ -19,10 +21,10 @@ def add_gamepad_callback(callback, gamepad_id = 0):
 
     gamepad_sub = carb_input.subscribe_to_gamepad_events(
         gamepad,
-        # lambda event, *args,: self._on_gamepad_event(event, *args),
         callback
     )
     return gamepad_sub
+
 
 class Logger:
     def __init__(self, name):
@@ -40,14 +42,19 @@ class Logger:
         self.log.error(msg)
 
     def info(self, *args):
-        return
         msg = self.parse_message(*args)
         self.log.info(msg)
 
     def debug(self, *args):
-        return
         msg = self.parse_message(*args)
         self.log.debug(msg)
 
 
 log = Logger("drone_sim")
+import os
+
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+
+def relative_file(path):
+    return os.path.join(ROOT_DIR, path)
