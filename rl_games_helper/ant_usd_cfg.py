@@ -6,9 +6,9 @@ from omni.isaac.lab.assets import ArticulationCfg
 
 """Configuration for the Mujoco Ant robot."""
 ANT_CFG = ArticulationCfg(
-    prim_path="/World/antt",
+    prim_path="/World/ant",
     spawn=sim_utils.UsdFileCfg(
-        usd_path=f"/home/kkona/Documents/research/drone_sim_lab/assets/animals/ant.usd",
+        usd_path="/home/kkona/Documents/research/drone_sim_lab/assets/animals/ant_instanceable.usd",
         rigid_props=sim_utils.RigidBodyPropertiesCfg(
             disable_gravity=False,
             max_depenetration_velocity=10.0,
