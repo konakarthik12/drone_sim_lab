@@ -5,17 +5,13 @@
 
 from __future__ import annotations
 
-from omni.isaac.lab_assets.ant import ANT_CFG
-
-import omni.isaac.lab.sim as sim_utils
 from omni.isaac.lab.assets import ArticulationCfg
 from omni.isaac.lab.envs import DirectRLEnvCfg
 from omni.isaac.lab.scene import InteractiveSceneCfg
 from omni.isaac.lab.sim import SimulationCfg
-from omni.isaac.lab.terrains import TerrainImporterCfg
 from omni.isaac.lab.utils import configclass
 
-
+from ant_usd_cfg import ANT_CFG
 
 @configclass
 class AntEnvCfg(DirectRLEnvCfg):
@@ -30,12 +26,11 @@ class AntEnvCfg(DirectRLEnvCfg):
     # simulation
     sim: SimulationCfg = SimulationCfg(dt=1 / 250, render_interval=decimation, device="cpu", use_fabric=False)
 
-
     # scene
     scene: InteractiveSceneCfg = InteractiveSceneCfg(num_envs=4096, env_spacing=4.0, replicate_physics=True)
 
     # robot
-    robot: ArticulationCfg = ANT_CFG.replace(prim_path="/World/envs/env_.*/Robot")
+    robot: ArticulationCfg = ANT_CFG
     joint_gears: list = [15, 15, 15, 15, 15, 15, 15, 15]
 
     heading_weight: float = 0.5
