@@ -1,24 +1,21 @@
 import numpy as np
 
 
+
 class AntController:
-    def __init__(self, parent_env, init_pose=np.array([0, 0, 0.7]), crab_scale=0.1):
-        from omni.isaac.core.articulations import Articulation
+    def __init__(self, parent_env):
+        # from omni.isaac.core.articulations import Articulation
+        from omni.isaac.lab.assets import Articulation
 
         self.world = parent_env.world
 
-        ant_path = "/home/kkona/Documents/research/drone_sim_lab/assets/animals/ant_instanceable.usd"
-        prim_path = "/World/ant"
-        import omni.isaac.core.utils.stage as stage_utils
+        from rl_games_helper.ant_usd_cfg import get_ant_cfg
 
-        stage_utils.add_reference_to_stage(ant_path, prim_path)
-        self.init_pose = [6, 0, 0.3]
-        self.robot = Articulation(prim_path=prim_path,
-                                  name="ant",
-                                  position=self.init_pose,  # self.default_object_pose,
-                                  scale=[0.045] * 3)
-        self.world.scene.add(self.robot)
-        # self.robot.initialize()
+        self.init_pose = (6, 0, 0.3)
+        self.scale = [0.045] * 3
+        ant_cfg = get_ant_cfg(self.init_pose, scale=self.scale)
+        self.robot = Articulation(ant_cfg)
+
         num_dof = 5
         self.action_space = np.zeros((num_dof,), dtype=np.float32)
 

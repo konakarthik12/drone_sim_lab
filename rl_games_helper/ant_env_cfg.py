@@ -11,7 +11,7 @@ from omni.isaac.lab.scene import InteractiveSceneCfg
 from omni.isaac.lab.sim import SimulationCfg
 from omni.isaac.lab.utils import configclass
 
-from ant_usd_cfg import ANT_CFG
+from ant_usd_cfg import get_ant_cfg
 
 @configclass
 class AntEnvCfg(DirectRLEnvCfg):
@@ -30,7 +30,7 @@ class AntEnvCfg(DirectRLEnvCfg):
     scene: InteractiveSceneCfg = InteractiveSceneCfg(num_envs=4096, env_spacing=4.0, replicate_physics=True)
 
     # robot
-    robot: ArticulationCfg = ANT_CFG
+    robot: ArticulationCfg = get_ant_cfg()
     joint_gears: list = [15, 15, 15, 15, 15, 15, 15, 15]
 
     heading_weight: float = 0.5
