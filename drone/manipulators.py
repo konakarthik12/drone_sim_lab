@@ -76,15 +76,15 @@ class Manipulators:
 
 class Manipulators:
     def __init__(self, world, drone):
-        self.world = world
+        self.world =world
         self.drone = drone
-        self.world.reset()
-        dc = world.dc_interface
+
+    def post_init(self):
+        dc = self.world.dc_interface
         drone_articulation = dc.get_articulation(self.drone._stage_prefix)
         dc.wake_up_articulation(drone_articulation)
-        self.arms = Arms(world, drone_articulation)
-        self.grippers = Grippers(world, drone_articulation)
-
+        self.arms = Arms(self.world, drone_articulation)
+        self.grippers = Grippers(self.world, drone_articulation)
     def step(self, action):
         self.arms.move_arms(action[:2])
         self.grippers.move_grippers(action[2])

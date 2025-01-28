@@ -22,7 +22,8 @@ class DroneTeleOpEnv(IsaacEnv):
         self.drone_controller.step(action)
         # self.crab_controller.step()
         return {}, 0.0, False, False, {}
-
+    def post_init(self):
+        self.drone_controller.post_init()
     def reset(
             self,
             *,

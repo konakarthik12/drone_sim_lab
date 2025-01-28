@@ -43,12 +43,15 @@ class DroneControllerQGroundControl:
 
         log.info("Initialized the Drone")
         from drone.manipulators import Manipulators
-
         self.manipulators = Manipulators(self.world, self.drone)
 
     def reset(self, reset_pos=None):
-        time.sleep(0.5)
+        pass
 
     # action space (3,): [joint1_pos, joint2_pos, gripper_close]
     def step(self, action):
         self.manipulators.step(action)
+        return
+    def post_init(self):
+        self.manipulators.post_init()
+        return
