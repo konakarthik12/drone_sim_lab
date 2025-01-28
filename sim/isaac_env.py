@@ -44,6 +44,7 @@ class IsaacEnv(gymnasium.Env):
         self.world = FakeWorld(sim_cfg)
 
         self.load_layout(layout_type)
+        self.init_reset = False
 
     def get_world_settings(self):
         return {}
@@ -87,7 +88,11 @@ class IsaacEnv(gymnasium.Env):
             options: dict[str, Any] | None = None,
     ) -> tuple[ObsType, dict[str, Any]]:
         super().reset(seed=seed, options=options)
-        self.world.reset(soft=True)
+        if not self.init_reset:
+            self.world.reset(soft=False)
+            self.post_init()
+        else:
+            self.world.reset(soft=True)
         return {}, {}
 
     def step(
@@ -95,6 +100,7 @@ class IsaacEnv(gymnasium.Env):
     ) -> tuple[ObsType, SupportsFloat, bool, bool, dict[str, Any]]:
         self.world.step(render=True)
         return {}, 0.0, False, False, {}
-
+    def post_init(self):
+        pass
     # def render(self) -> RenderFrame | list[RenderFrame] | None:
     #     return self.world.render(mode="human")
