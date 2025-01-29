@@ -9,6 +9,12 @@ from utils import log
 Given a parent environment, this class creates a drone controller object that can be used to control the drone.
 """
 
+def force_kill_px4():
+    import psutil
+    for proc in psutil.process_iter():
+        # check whether the process name matches
+        if proc.name() == "px4":
+            proc.kill()
 
 class DroneControllerQGroundControl:
     def __init__(self, parent_env, init_pos=np.array([0, 0, 2.5])):
@@ -25,9 +31,13 @@ class DroneControllerQGroundControl:
         self._config_multirotor = MultirotorConfig()
 
         config_multirotor = MultirotorConfig()
+
+        # There is a really annoying issue with previous px4 connections not being killed sometimes
+        # This is a workaround for that
+        force_kill_px4()
         mavlink_config = PX4MavlinkBackendConfig({
             "vehicle_id": 0,
-            "px4_autolaunch": True,
+            "px4_autolaunch": True, # Launch PX4 automatically
             "px4_dir": self.pg.px4_path,
             "px4_vehicle_model": self.pg.px4_default_airframe
         })
