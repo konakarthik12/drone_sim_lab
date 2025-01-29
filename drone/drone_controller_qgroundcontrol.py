@@ -34,7 +34,7 @@ class DroneControllerQGroundControl:
         config_multirotor.backends = [PX4MavlinkBackend(mavlink_config)]
         self.drone = Multirotor(
             "/World/quadrotor",
-            "/home/kkona/Documents/research/drone_sim_lab/assets/drones/iris_copy.usd",
+            "/home/kkona/Documents/research/drone_sim_lab/assets/drones/iris_with_arm.usd",
             0,
             [0.0, 0.0, 1.02],
             list(Rotation.from_euler("XYZ", [0.0, 0.0, 0.0], degrees=True).as_quat()),
