@@ -24,9 +24,6 @@ class FakeWorld(SimulationContext):
 
         self._scene = Scene()
 
-        from omni.isaac.dynamic_control import _dynamic_control
-        self.dc_interface = _dynamic_control.acquire_dynamic_control_interface()
-
         return
 
 

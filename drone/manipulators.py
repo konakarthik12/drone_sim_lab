@@ -1,7 +1,13 @@
 import math
 
+import numpy as np
+from omni.isaac.lab.assets import Articulation
+
+JOINT_NAMES = ["grip_1_joint", "grip_2_joint", "grip_3_joint"]
+
 GRIPPER_CLOSE = 0.05
 GRIPPER_OPEN = -0.95
+from sim.dc_interface import dc
 
 
 def lerp(a, b, t):
@@ -16,15 +22,11 @@ def step_towards(a, b, step_size=0.1):
 
 
 class Grippers:
-    def __init__(self, world, drone):
-        self.dc = world.dc_interface
-        self.drone = drone
-        self.joint_names = ["grip_1_joint", "grip_2_joint", "grip_3_joint"]
-
+    def __init__(self, articulation: Articulation):
         def find_dof(joint_name):
-            return self.dc.find_articulation_dof(self.drone, joint_name)
+            return dc.find_articulation_dof(articulation, joint_name)
 
-        self.articulation_dof = list(map(find_dof, self.joint_names))
+        self.articulation_dof = list(map(find_dof, JOINT_NAMES))
 
     # action space (1,): [gripper_pos] (0.0, 1.0)
     # gripper_pos: 0.0 -> open, 1.0 -> close
@@ -32,22 +34,20 @@ class Grippers:
         # internally, the gripper joint is in the range (0.05, -0.95)
         desired_joint_pos = lerp(GRIPPER_OPEN, GRIPPER_CLOSE, desired_joint_pos)
         for joint in self.articulation_dof:
-            curr_pos = self.dc.get_dof_position(joint)
+            curr_pos = dc.get_dof_position(joint)
             target_pos = step_towards(curr_pos, desired_joint_pos, step_size)
-            self.dc.set_dof_position_target(joint, target_pos)
+            dc.set_dof_position_target(joint, target_pos)
 
 
 #     arm_1_joint is just above the base joint of the manipulator, joint range (-2,1.37)
 #     arm_2_joint is just above arm_1_joint, joint range (-3.78, .87)
 class Arms:
-    def __init__(self, world, drone):
-        self.dc = world.dc_interface
+    def __init__(self, drone):
         self.drone = drone
-        self.joint_names = [ "arm_1_joint", "arm_2_joint"]
+        self.joint_names = ["arm_1_joint", "arm_2_joint"]
 
         def find_dof(joint_name):
-            dof = self.dc.find_articulation_dof(self.drone, joint_name)
-            print(joint_name, dof)
+            dof = dc.find_articulation_dof(self.drone, joint_name)
             return dof
 
         self.articulation_dof = list(map(find_dof, self.joint_names))
@@ -55,9 +55,9 @@ class Arms:
     # action space (3,): [joint1_pos, joint2_pos]
     def move_arms(self, desired_joint_poses, step_size=0.1):
         for joint, desired_joint_pos in zip(self.articulation_dof, desired_joint_poses):
-            curr_pos = self.dc.get_dof_position(joint)
+            curr_pos = dc.get_dof_position(joint)
             target_pos = step_towards(curr_pos, desired_joint_pos, step_size)
-            self.dc.set_dof_position_target(joint, target_pos)
+            dc.set_dof_position_target(joint, target_pos)
 
     def home_position(self):
         self.move_arms([0.0, 0.0])
@@ -75,16 +75,40 @@ class Manipulators:
 
 
 class Manipulators:
-    def __init__(self, world, drone):
-        self.world =world
-        self.drone = drone
+    def __init__(self, world):
+        self.world = world
 
-    def post_init(self):
-        dc = self.world.dc_interface
-        drone_articulation = dc.get_articulation(self.drone._stage_prefix)
-        dc.wake_up_articulation(drone_articulation)
-        self.arms = Arms(self.world, drone_articulation)
-        self.grippers = Grippers(self.world, drone_articulation)
+    def post_init(self, articulation):
+        articulation = articulation
+        dc.wake_up_articulation(articulation)
+        self.arms = Arms(articulation)
+        self.grippers = Grippers(articulation)
+
     def step(self, action):
         self.arms.move_arms(action[:2])
         self.grippers.move_grippers(action[2])
+
+
+class ManipulatorState:
+    def __init__(self):
+        self.joint1_pos = 0
+        self.joint2_pos = 0
+        self.gripper = 0.0
+
+    def gamepad_callback(self, event):
+        import carb.input
+
+        if event.input == carb.input.GamepadInput.X:
+            if event.value > 0.5:
+                self.gripper = 1 - self.gripper
+        if event.input == carb.input.GamepadInput.DPAD_UP:
+            self.joint1_pos += 0.1
+        if event.input == carb.input.GamepadInput.DPAD_DOWN:
+            self.joint1_pos -= 0.1
+        if event.input == carb.input.GamepadInput.LEFT_SHOULDER:
+            self.joint2_pos -= 0.05
+        if event.input == carb.input.GamepadInput.RIGHT_SHOULDER:
+            self.joint2_pos += 0.05
+
+    def as_action(self):
+        return np.array([self.joint1_pos, self.joint2_pos, self.gripper])

@@ -10,6 +10,7 @@ def init_app(headless=False):
     assert not headless, "Headless mode is not working for some reason"
     app_launcher = AppLauncher(headless=headless)
     _app = app_launcher.app
+    return _app
 
 
 def get_app():
