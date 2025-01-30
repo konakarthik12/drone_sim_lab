@@ -1,5 +1,3 @@
-import time
-
 import numpy as np
 from scipy.spatial.transform import Rotation
 
@@ -42,8 +40,9 @@ class DroneControllerQGroundControl:
             "px4_vehicle_model": self.pg.px4_default_airframe
         })
         config_multirotor.backends = [PX4MavlinkBackend(mavlink_config)]
+        self.stage_prefix = "/World/quadrotor"
         self.drone = Multirotor(
-            "/World/quadrotor",
+            self.stage_prefix,
             "/home/kkona/Documents/research/drone_sim_lab/assets/drones/iris_with_arm.usd",
             0,
             [0.0, 0.0, 1.02],
@@ -53,7 +52,9 @@ class DroneControllerQGroundControl:
 
         log.info("Initialized the Drone")
         from drone.manipulators import Manipulators
-        self.manipulators = Manipulators(self.world, self.drone)
+
+
+        self.manipulators = Manipulators(self.world)
 
     def reset(self, reset_pos=None):
         pass
@@ -63,5 +64,8 @@ class DroneControllerQGroundControl:
         self.manipulators.step(action)
         return
     def post_init(self):
-        self.manipulators.post_init()
+        from sim.dc_interface import dc
+        drone_articulation = dc.get_articulation(self.stage_prefix)
+
+        self.manipulators.post_init(drone_articulation)
         return
