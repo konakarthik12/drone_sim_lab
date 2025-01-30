@@ -40,7 +40,7 @@ class DroneControllerQGroundControl:
             "px4_vehicle_model": self.pg.px4_default_airframe
         })
         config_multirotor.backends = [PX4MavlinkBackend(mavlink_config)]
-        self.stage_prefix = "/World/quadrotor"
+        self.stage_prefix = "/World/drone"
         self.drone = Multirotor(
             self.stage_prefix,
             "/home/kkona/Documents/research/drone_sim_lab/assets/drones/iris_with_arm.usd",
