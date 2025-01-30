@@ -90,10 +90,10 @@ class Manipulators:
 
 
 class ManipulatorState:
-    def __init__(self):
-        self.joint1_pos = 0
-        self.joint2_pos = 0
-        self.gripper = 0.0
+    def __init__(self, joint1_pos=0,joint2_pos = 0, gripper=0.0):
+        self.joint1_pos = joint1_pos
+        self.joint2_pos = joint2_pos
+        self.gripper = gripper
 
     def gamepad_callback(self, event):
         import carb.input
