@@ -9,7 +9,7 @@ from rl_games_raw import RlGamesVecEnvWrapper
 
 from locomotion_env import LocomotionEnv
 task_name = "Isaac-Ant-Direct-v0"
-resume_path = "/home/kkona/Documents/research/drone_sim_lab/rl_games_helper/ant_direct_policy.pth"
+resume_path = "/home/kkona/Documents/research/drone_sim_lab/rl_games_helper/assets/animals/ant_direct_policy.pth"
 
 import omni.isaac.lab_tasks  # noqa: F401
 
