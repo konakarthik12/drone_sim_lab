@@ -9,7 +9,7 @@ from rl_games_raw import RlGamesVecEnvWrapper
 
 from locomotion_env import LocomotionEnv
 task_name = "Isaac-Ant-Direct-v0"
-resume_path = "/home/kkona/Documents/research/drone_sim_lab/rl_games_helper/assets/animals/ant_direct_policy.pth"
+resume_path = "/home/kkona/Documents/research/drone_sim_lab/assets/animals/ant_direct_policy.pth"
 
 import omni.isaac.lab_tasks  # noqa: F401
 
@@ -31,7 +31,8 @@ env = RlGamesVecEnvWrapper(isaac_env)
 
 
 from agent import Agent
-agent_cfg = load_cfg_from_registry(task_name, "rl_games_cfg_entry_point")
+agent_cfg= load_cfg_from_registry(task_name, "rl_games_cfg_entry_point")
+agent_cfg["params"]["config"]["device"] = "cpu"
 
 agent = Agent(agent_cfg, resume_path)
 
