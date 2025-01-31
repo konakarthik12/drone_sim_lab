@@ -13,7 +13,7 @@ from sim.isaac_env import IsaacEnv
 from drone.drone_controller_fixed import DroneControllerFixed
 from omni.isaac.lab.assets import Articulation
 
-from rl_games_helper.ant_usd_cfg import get_ant_cfg
+from animals.ant.ant_usd_cfg import get_ant_cfg
 
 
 class ArmTeleOpEnv(IsaacEnv):

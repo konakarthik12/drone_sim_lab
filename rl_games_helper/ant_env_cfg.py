@@ -11,7 +11,7 @@ from omni.isaac.lab.scene import InteractiveSceneCfg
 from omni.isaac.lab.sim import SimulationCfg
 from omni.isaac.lab.utils import configclass
 
-from ant_usd_cfg import get_ant_cfg
+from animals.ant.ant_usd_cfg import get_ant_cfg
 
 @configclass
 class AntEnvCfg(DirectRLEnvCfg):

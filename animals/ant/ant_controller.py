@@ -9,7 +9,7 @@ class AntController:
 
         self.world = parent_env.world
 
-        from rl_games_helper.ant_usd_cfg import get_ant_cfg
+        from animals.ant.ant_usd_cfg import get_ant_cfg
 
         self.init_pose = (6, 0, 0.3)
         self.scale = [0.045] * 3
