@@ -9,7 +9,7 @@ import omni.isaac.lab.sim
 import pegasus.simulator.logic
 import omni.isaac.version
 import omni.isaac.dynamic_control
-
+import omni.appwindow
 
 modules = [
     omni.isaac.kit,
