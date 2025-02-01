@@ -1,14 +1,10 @@
 from sim.app import init_app
 init_app()
 
-import numpy as np
-
 from drone.teleop.drone_teleop_env import DroneTeleOpEnv
 from utils import add_gamepad_callback
 
 env = DroneTeleOpEnv(layout_type="grid")
-
-
 
 from drone.manipulators import ManipulatorState
 
