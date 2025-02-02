@@ -4,7 +4,7 @@ from gymnasium.core import ObsType
 
 from animals.ant.zero_ant_controller import ZeroAntController
 from animals.crab.zero_crab_controller import ZeroCrabController
-from drone.drone_controller_qgroundcontrol import DroneControllerQGroundControl
+from drone.drone_controller import DroneControllerQGroundControl
 from sim.isaac_env import IsaacEnv
 
 
