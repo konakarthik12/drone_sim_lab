@@ -1,11 +1,21 @@
 import numpy as np
-from pegasus.simulator.logic.backends import Backend
-from scipy.spatial.transform import Rotation
-from pegasus.simulator.logic.vehicles.multirotor import Multirotor, MultirotorConfig
 from pegasus.simulator.logic import PegasusInterface
+from pegasus.simulator.logic.backends import BackendConfig
+from pegasus.simulator.logic.vehicles.multirotor import Multirotor, MultirotorConfig
+from scipy.spatial.transform import Rotation
+
+from drone.drone_utils.pegasus_backend import PegasusBackend
 from drone.manipulators import Manipulators
 
-from utils import log
+
+class DirectBackend(PegasusBackend):
+    def __init__(self, config=BackendConfig()):
+        super().__init__(config)
+        self.last_action = np.zeros(4)
+
+    def input_reference(self):
+        return self.last_action
+
 
 """
 Given a parent environment, this class creates a drone controller object that can be used to control the drone.
@@ -21,9 +31,9 @@ def force_kill_px4():
 
 
 class DroneController:
-    def __init__(self, parent_env):
-        log.info("Initializing Multirotor and Objects")
+    backend: DirectBackend
 
+    def __init__(self, parent_env):
         self.world = parent_env.world
         self.pg = PegasusInterface()
         self.pg._world = self.world
@@ -47,19 +57,18 @@ class DroneController:
             config=config_multirotor,
         )
 
-        log.info("Initialized the Drone")
-
         self.manipulators = Manipulators(self.world)
 
-    def get_backend(self) -> Backend | None:
-        return None
+    def get_backend(self):
+        return DirectBackend()
 
     def reset(self, reset_pos=None):
         pass
 
-    # action space (3,): [joint1_pos, joint2_pos, gripper_close]
+    # action space (7,): [motor1, ..., motor4, joint1_pos, joint2_pos, gripper_close]
     def step(self, action):
-        self.manipulators.step(action)
+        self.backend.last_action = action[:4]
+        self.manipulators.step(action[4:])
         return
 
     def post_init(self):
@@ -69,3 +78,5 @@ class DroneController:
         self.manipulators.post_init(drone_articulation)
         return
 
+    def close(self):
+        self.backend.stop()
