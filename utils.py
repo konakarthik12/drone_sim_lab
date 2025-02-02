@@ -15,9 +15,9 @@ def add_gamepad_callback(callback, gamepad_id=0):
     carb_settings_iface = carb.settings.get_settings()
     carb_settings_iface.set_bool("/persistent/app/omniverse/gamepadCameraControl", False)
     carb_input = carb.input.acquire_input_interface()
-    appwindow = omni.appwindow.get_default_app_window()
+    app_window = omni.appwindow.get_default_app_window()
 
-    gamepad = appwindow.get_gamepad(gamepad_id)
+    gamepad = app_window.get_gamepad(gamepad_id)
 
     gamepad_sub = carb_input.subscribe_to_gamepad_events(
         gamepad,
