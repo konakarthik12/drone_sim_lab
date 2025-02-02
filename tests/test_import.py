@@ -12,6 +12,7 @@ import omni.isaac.dynamic_control
 import omni.appwindow
 import omni.timeline
 import omni.kit.viewport.utility
+import omni.isaac.sensor
 modules = [
     omni.isaac.kit,
     carb,
@@ -22,8 +23,7 @@ modules = [
     omni.isaac.version,
     omni.timeline,
     omni.kit.viewport.utility,
-
-
+    omni.isaac.sensor
 ]
 print(omni.appwindow.__file__)
 
