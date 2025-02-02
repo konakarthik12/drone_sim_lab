@@ -9,10 +9,10 @@ from sim.isaac_env import IsaacEnv
 
 
 class DroneTeleOpEnv(IsaacEnv):
-    def __init__(self, **kwargs):
+    def __init__(self, record_path=None, **kwargs):
         super().__init__(**kwargs)
         self.ant_controller = ZeroAntController(parent_env=self)
-        self.drone_controller = DroneControllerQGroundControl(parent_env=self)
+        self.drone_controller = DroneControllerQGroundControl(parent_env=self, record_path=record_path)
 
     # actual left and right joystick values are handled by the QGroundControl
     # we only handle manipulator control here
@@ -20,10 +20,11 @@ class DroneTeleOpEnv(IsaacEnv):
     def step(self, action):
         super().step(action)
         self.drone_controller.step(action)
-        # self.crab_controller.step()
         return {}, 0.0, False, False, {}
+
     def post_init(self):
         self.drone_controller.post_init()
+
     def reset(
             self,
             *,
@@ -34,3 +35,6 @@ class DroneTeleOpEnv(IsaacEnv):
         self.drone_controller.reset()
         # self.crab_controller.reset()
         return {}, {}
+
+    def close(self):
+        self.drone_controller.close()
