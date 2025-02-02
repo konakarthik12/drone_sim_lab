@@ -31,7 +31,7 @@ class IsaacEnv(gymnasium.Env):
         from omni.isaac.lab.sim import SimulationCfg
         from sim.fake_world import FakeWorld
 
-        sim_cfg = SimulationCfg(dt=1 / 250, render_interval=250 / 60, device="cpu")
+        sim_cfg = SimulationCfg(dt=1 / 250, render_interval=1, device="cpu")
         sim_cfg.use_fabric = False
 
         self.world:FakeWorld = FakeWorld(sim_cfg)
