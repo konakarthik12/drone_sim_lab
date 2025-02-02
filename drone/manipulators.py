@@ -2,6 +2,7 @@ import math
 
 import numpy as np
 from omni.isaac.lab.assets import Articulation
+import carb.input
 
 JOINT_NAMES = ["grip_1_joint", "grip_2_joint", "grip_3_joint"]
 
@@ -96,7 +97,6 @@ class ManipulatorState:
         self.gripper = gripper
 
     def gamepad_callback(self, event):
-        import carb.input
 
         if event.input == carb.input.GamepadInput.X:
             if event.value > 0.5:
