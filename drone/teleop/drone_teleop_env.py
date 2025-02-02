@@ -9,10 +9,10 @@ from sim.isaac_env import IsaacEnv
 
 
 class DroneTeleOpEnv(IsaacEnv):
-    def __init__(self, record_path=None, **kwargs):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.ant_controller = ZeroAntController(parent_env=self)
-        self.drone_controller = DroneControllerQGroundControl(parent_env=self, record_path=record_path)
+        self.drone_controller = DroneControllerQGroundControl(parent_env=self)
 
     # actual left and right joystick values are handled by the QGroundControl
     # we only handle manipulator control here

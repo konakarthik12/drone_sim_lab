@@ -1,3 +1,5 @@
+import numpy as np
+
 from sim.app import init_app
 
 init_app()
@@ -21,9 +23,11 @@ commands = []
 set_active_camera("/World/drone/arm/arm_base/Camera")
 env.reset()
 while not exit_watcher.pressed:
-    env.step(state.as_action())
-    commands.append(env.drone_controller.backend.input_reference().copy())
+    mani_action = state.as_action()
+    env.step(mani_action)
+    drone_action = np.array(env.drone_controller.backend.input_reference())
+    commands.append(np.append(drone_action, mani_action))
 
-save_pickle("drone_commands.pkl", commands)
-print("Commands saved to drone_commands.pkl")
+save_pickle("episode_actions.pkl", commands)
+print("Commands saved to episode_actions.pkl")
 env.close()
