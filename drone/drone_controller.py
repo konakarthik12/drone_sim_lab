@@ -48,12 +48,15 @@ class DroneController:
         self.backend = self.get_backend()
         config_multirotor.backends = [self.backend] if self.backend else []
         self.stage_prefix = "/World/drone"
+        init_pos = np.array([0.0, 0.0, 1.02])
+        init_rot = np.array([0.0, 0.0, 0])
+        # noinspection PyTypeChecker
         self.drone = Multirotor(
             self.stage_prefix,
             "/home/kkona/Documents/research/drone_sim_lab/assets/drones/iris_with_arm.usd",
             0,
-            [0.0, 0.0, 1.02],
-            list(Rotation.from_euler("XYZ", [0.0, 0.0, 0.0], degrees=True).as_quat()),
+            init_pos,
+            Rotation.from_euler("XYZ", init_rot, degrees=True).as_quat(),
             config=config_multirotor,
         )
 
