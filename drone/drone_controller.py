@@ -1,6 +1,9 @@
 import numpy as np
 from pegasus.simulator.logic.backends import Backend
 from scipy.spatial.transform import Rotation
+from pegasus.simulator.logic.vehicles.multirotor import Multirotor, MultirotorConfig
+from pegasus.simulator.logic import PegasusInterface
+from drone.manipulators import Manipulators
 
 from utils import log
 
@@ -18,15 +21,12 @@ def force_kill_px4():
 
 
 class DroneController:
-    def __init__(self, parent_env, init_pos=np.array([0, 0, 2.5])):
-        from pegasus.simulator.logic.vehicles.multirotor import Multirotor, MultirotorConfig
+    def __init__(self, parent_env):
         log.info("Initializing Multirotor and Objects")
 
         self.world = parent_env.world
-        from pegasus.simulator.logic import PegasusInterface
         self.pg = PegasusInterface()
         self.pg._world = self.world
-        self.init_pos = init_pos
 
         self._config_multirotor = MultirotorConfig()
 
@@ -35,7 +35,6 @@ class DroneController:
         # There is a really annoying issue with previous px4 connections not being killed sometimes
         # This is a workaround for that
         force_kill_px4()
-
         self.backend = self.get_backend()
         config_multirotor.backends = [self.backend] if self.backend else []
         self.stage_prefix = "/World/drone"
@@ -49,9 +48,11 @@ class DroneController:
         )
 
         log.info("Initialized the Drone")
-        from drone.manipulators import Manipulators
 
         self.manipulators = Manipulators(self.world)
+
+    def get_backend(self) -> Backend | None:
+        return None
 
     def reset(self, reset_pos=None):
         pass
@@ -68,5 +69,3 @@ class DroneController:
         self.manipulators.post_init(drone_articulation)
         return
 
-    def get_backend(self) -> Backend | None:
-        return None
