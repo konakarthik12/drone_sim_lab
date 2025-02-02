@@ -109,6 +109,7 @@ class ManipulatorState:
             self.joint2_pos -= 0.05
         if event.input == carb.input.GamepadInput.RIGHT_SHOULDER:
             self.joint2_pos += 0.05
+        return True
 
     def as_action(self):
         return np.array([self.joint1_pos, self.joint2_pos, self.gripper])
