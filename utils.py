@@ -1,6 +1,6 @@
 import logging
 
-from carb.input import GamepadEvent, GamepadInput
+from carb.input import GamepadEvent
 
 
 def enable_gpu_dynamics():
