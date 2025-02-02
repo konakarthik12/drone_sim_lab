@@ -33,15 +33,8 @@ class IsaacEnv(gymnasium.Env):
 
         sim_cfg = SimulationCfg(dt=1 / 250, render_interval=250 / 60, device="cpu")
         sim_cfg.use_fabric = False
-        # sim_cfg.physx.enable_ccd = True
-        # sim_cfg.physx.bounce_threshold_velocity = 0.0
-        # sim_cfg.enable_scene_query_support = False
-        # sim_cfg = SimulationCfg(dt=1/120, render_interval=1,device="cpu")
-        from omni.isaac.lab.sim import SimulationContext
-        # self.world = SimulationContext(sim_cfg)
-        # self.world = World(**kwargs)
 
-        self.world = FakeWorld(sim_cfg)
+        self.world:FakeWorld = FakeWorld(sim_cfg)
 
         self.load_layout(layout_type)
         self.init_reset = False
