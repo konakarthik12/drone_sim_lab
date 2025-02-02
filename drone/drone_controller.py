@@ -1,4 +1,5 @@
 import numpy as np
+from pegasus.simulator.logic.backends import PX4MavlinkBackendConfig, PX4MavlinkBackend
 from scipy.spatial.transform import Rotation
 
 from utils import log
@@ -16,7 +17,6 @@ def force_kill_px4():
 
 class DroneControllerQGroundControl:
     def __init__(self, parent_env, init_pos=np.array([0, 0, 2.5])):
-        from pegasus.simulator.logic.backends.px4_mavlink_backend import PX4MavlinkBackend, PX4MavlinkBackendConfig
         from pegasus.simulator.logic.vehicles.multirotor import Multirotor, MultirotorConfig
         log.info("Initializing Multirotor and Objects")
 
@@ -33,13 +33,9 @@ class DroneControllerQGroundControl:
         # There is a really annoying issue with previous px4 connections not being killed sometimes
         # This is a workaround for that
         force_kill_px4()
-        mavlink_config = PX4MavlinkBackendConfig({
-            "vehicle_id": 0,
-            "px4_autolaunch": True, # Launch PX4 automatically
-            "px4_dir": self.pg.px4_path,
-            "px4_vehicle_model": self.pg.px4_default_airframe
-        })
-        config_multirotor.backends = [PX4MavlinkBackend(mavlink_config)]
+
+        self.backend = self.get_backend()
+        config_multirotor.backends = [self.backend] if self.backend else None
         self.stage_prefix = "/World/drone"
         self.drone = Multirotor(
             self.stage_prefix,
@@ -69,3 +65,12 @@ class DroneControllerQGroundControl:
 
         self.manipulators.post_init(drone_articulation)
         return
+
+    def get_backend(self):
+        mavlink_config = PX4MavlinkBackendConfig({
+            "vehicle_id": 0,
+            "px4_autolaunch": True, # Launch PX4 automatically
+            "px4_dir": self.pg.px4_path,
+            "px4_vehicle_model": self.pg.px4_default_airframe
+        })
+        return PX4MavlinkBackend(mavlink_config)
