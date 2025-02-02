@@ -1,5 +1,7 @@
 import logging
 
+from carb.input import GamepadEvent, GamepadInput
+
 
 def enable_gpu_dynamics():
     from omni.physx import acquire_physx_interface
@@ -24,6 +26,24 @@ def add_gamepad_callback(callback, gamepad_id=0):
         callback
     )
     return gamepad_sub
+
+
+class GamepadButtonPressWatcher:
+    def __init__(self, button):
+        self.pressed = False
+        self.button = button
+
+    def gamepad_callback(self, event: GamepadEvent):
+        if event.input == self.button and event.value > 0.5:
+            self.pressed = True
+            return False
+        return True
+
+
+def set_active_camera(camera_path):
+    from omni.kit.viewport.utility import get_active_viewport
+    viewport = get_active_viewport()
+    viewport.set_active_camera(camera_path)
 
 
 class Logger:
@@ -58,3 +78,16 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 def relative_file(path):
     return os.path.join(ROOT_DIR, path)
+
+
+def open_pickle(path):
+    import pickle
+    with open(path, "rb") as f:
+        return pickle.load(f)
+
+
+def save_pickle(path, data):
+    import pickle
+    with open(path, "wb") as f:
+        # noinspection PyTypeChecker
+        pickle.dump(data, f)

@@ -1,0 +1,37 @@
+from typing import Any
+
+from gymnasium.core import ObsType
+
+from animals.ant.zero_ant_controller import ZeroAntController
+from animals.crab.zero_crab_controller import ZeroCrabController
+from drone.drone_controller import DroneController
+from drone.drone_controller_qgroundcontrol import DroneControllerQGroundControl
+from sim.isaac_env import IsaacEnv
+
+
+class DroneEnv(IsaacEnv):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.ant_controller = ZeroAntController(parent_env=self)
+        self.drone_controller = DroneController(parent_env=self)
+
+    def step(self, action):
+        super().step(action)
+        self.drone_controller.step(action)
+        return {}, 0.0, False, False, {}
+
+    def post_init(self):
+        self.drone_controller.post_init()
+
+    def reset(
+            self,
+            *,
+            seed: int | None = None,
+            options: dict[str, Any] | None = None,
+    ) -> tuple[ObsType, dict[str, Any]]:
+        super().reset(seed=seed, options=options)
+        self.drone_controller.reset()
+        return {}, {}
+
+    def close(self):
+        self.drone_controller.close()
