@@ -75,8 +75,8 @@ class DroneController:
         return
 
     def post_init(self):
-        from sim.dc_interface import dc
-        drone_articulation = dc.get_articulation(self.stage_prefix)
+        from sim.dc_interface import dci
+        drone_articulation = dci.get_articulation(self.stage_prefix)
 
         self.manipulators.post_init(drone_articulation)
         return

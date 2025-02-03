@@ -8,7 +8,7 @@ JOINT_NAMES = ["grip_1_joint", "grip_2_joint", "grip_3_joint"]
 
 GRIPPER_CLOSE = 0.05
 GRIPPER_OPEN = -0.95
-from sim.dc_interface import dc
+from sim.dc_interface import dci
 
 
 def lerp(a, b, t):
@@ -25,7 +25,7 @@ def step_towards(a, b, step_size=0.1):
 class Grippers:
     def __init__(self, articulation: Articulation):
         def find_dof(joint_name):
-            return dc.find_articulation_dof(articulation, joint_name)
+            return dci.find_articulation_dof(articulation, joint_name)
 
         self.articulation_dof = list(map(find_dof, JOINT_NAMES))
 
@@ -35,9 +35,9 @@ class Grippers:
         # internally, the gripper joint is in the range (0.05, -0.95)
         desired_joint_pos = lerp(GRIPPER_OPEN, GRIPPER_CLOSE, desired_joint_pos)
         for joint in self.articulation_dof:
-            curr_pos = dc.get_dof_position(joint)
+            curr_pos = dci.get_dof_position(joint)
             target_pos = step_towards(curr_pos, desired_joint_pos, step_size)
-            dc.set_dof_position_target(joint, target_pos)
+            dci.set_dof_position_target(joint, target_pos)
 
 
 #     arm_1_joint is just above the base joint of the manipulator, joint range (-2,1.37)
@@ -48,7 +48,7 @@ class Arms:
         self.joint_names = ["arm_1_joint", "arm_2_joint"]
 
         def find_dof(joint_name):
-            dof = dc.find_articulation_dof(self.drone, joint_name)
+            dof = dci.find_articulation_dof(self.drone, joint_name)
             return dof
 
         self.articulation_dof = list(map(find_dof, self.joint_names))
@@ -56,9 +56,9 @@ class Arms:
     # action space (3,): [joint1_pos, joint2_pos]
     def move_arms(self, desired_joint_poses, step_size=0.1):
         for joint, desired_joint_pos in zip(self.articulation_dof, desired_joint_poses):
-            curr_pos = dc.get_dof_position(joint)
+            curr_pos = dci.get_dof_position(joint)
             target_pos = step_towards(curr_pos, desired_joint_pos, step_size)
-            dc.set_dof_position_target(joint, target_pos)
+            dci.set_dof_position_target(joint, target_pos)
 
     def home_position(self):
         self.move_arms([0.0, 0.0])
@@ -81,7 +81,7 @@ class Manipulators:
 
     def post_init(self, articulation):
         articulation = articulation
-        dc.wake_up_articulation(articulation)
+        dci.wake_up_articulation(articulation)
         self.arms = Arms(articulation)
         self.grippers = Grippers(articulation)
 

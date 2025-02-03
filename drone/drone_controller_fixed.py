@@ -3,7 +3,7 @@ from omni.isaac.lab.sim import SimulationContext
 from scipy.spatial.transform import Rotation
 
 from utils import log
-from sim.dc_interface import dc
+from sim.dc_interface import dci
 
 
 class DroneControllerFixed:
@@ -56,8 +56,8 @@ class DroneControllerFixed:
         # dc.set_rigid_body_pose(self.drone_body, self.init_transform)
         return
     def post_init(self):
-        self.drone_articulation = dc.get_articulation(self.stage_prefix)
-        self.drone_body = dc.get_rigid_body("/World/drone/body")
+        self.drone_articulation = dci.get_articulation(self.stage_prefix)
+        self.drone_body = dci.get_rigid_body("/World/drone/body")
 
         self.manipulators.post_init(self.drone_articulation)
         return
