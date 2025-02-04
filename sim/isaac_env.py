@@ -79,18 +79,9 @@ class IsaacEnv(gymnasium.Env):
         elif layout_type == "grid":
             cfg = sim_utils.UsdFileCfg(
                 usd_path=f"/home/kkona/Documents/research/drone_sim_lab/assets/worlds/grid_with_stand.usd")
-            cfg.func("/World/layout", cfg, translation=(0.0, 0.0, -0.1))
-
-            cfg = GroundPlaneCfg(
-                physics_material=sim_utils.RigidBodyMaterialCfg(
-                            friction_combine_mode="average",
-                            restitution_combine_mode="average",
-                            static_friction=1.0,
-                            dynamic_friction=1.0,
-                            restitution=0.0,
-                        ),
-            )
-            cfg.func("/World/defaultGroundPlane", cfg)
+            cfg.func("/World/layout", cfg)
+        else:
+            raise ValueError(f"Unknown layout type {layout_type}")
 
     def reset(
             self,
