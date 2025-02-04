@@ -2,7 +2,8 @@ from typing import Any, SupportsFloat
 
 import gymnasium
 from gymnasium.core import ObsType, ActType, RenderFrame
-
+from omni.isaac.lab.sim import GroundPlaneCfg
+from omni.isaac.lab.sim import DomeLightCfg
 from utils import enable_gpu_dynamics
 
 
@@ -48,11 +49,20 @@ class IsaacEnv(gymnasium.Env):
 
         if layout_type == "air":
             # self.world.scene.add_default_ground_plane()
-            from omni.isaac.lab.sim import GroundPlaneCfg
-            from omni.isaac.lab.sim import DomeLightCfg
 
-            cfg = GroundPlaneCfg()
+
+            cfg = GroundPlaneCfg(
+                physics_material=sim_utils.RigidBodyMaterialCfg(
+                            friction_combine_mode="average",
+                            restitution_combine_mode="average",
+                            static_friction=1.0,
+                            dynamic_friction=1.0,
+                            restitution=0.0,
+                        ),
+            )
             cfg.func("/World/defaultGroundPlane", cfg)
+
+
             cfg = DomeLightCfg(
                 color=(0.1, 0.1, 0.1),
                 enable_color_temperature=True,
@@ -64,7 +74,6 @@ class IsaacEnv(gymnasium.Env):
 
         elif layout_type == "water":
             raise NotImplementedError("Water layout not implemented yet")
-            pass
             # self.pg.load_environment(ENV_ASSETS + "/fluid_test_2.usd")
             # cfg = sim_utils.UsdFileCfg(usd_path=f"{ENV_ASSETS}/fluid_test_2.usd")
             # cfg.func("/World/layout", cfg)
@@ -72,11 +81,21 @@ class IsaacEnv(gymnasium.Env):
         elif layout_type == "grid":
             cfg = sim_utils.UsdFileCfg(
                 usd_path=f"/home/kkona/Documents/research/drone_sim_lab/assets/worlds/grid_with_stand.usd")
-            cfg.func("/World/layout", cfg)
+            cfg.func("/World/layout", cfg, translation=(0.0, 0.0, -0.1))
+
+            cfg = GroundPlaneCfg(
+                physics_material=sim_utils.RigidBodyMaterialCfg(
+                            friction_combine_mode="average",
+                            restitution_combine_mode="average",
+                            static_friction=1.0,
+                            dynamic_friction=1.0,
+                            restitution=0.0,
+                        ),
+            )
+            cfg.func("/World/defaultGroundPlane", cfg)
 
     def reset(
             self,
-            *,
             seed: int | None = None,
             options: dict[str, Any] | None = None,
     ) -> tuple[ObsType, dict[str, Any]]:
