@@ -2,6 +2,7 @@ from sim.app import init_app, get_app
 from sim.isaac_env import IsaacEnv
 init_app()
 env = IsaacEnv()
+from sim.dc_interface import dc
 
 import omni.isaac.kit
 import carb.settings
@@ -26,6 +27,7 @@ modules = [
     omni.isaac.sensor
 ]
 print(omni.appwindow.__file__)
+print(dc.__file__)
 
 for module in modules:
     print(module.__name__, module.__file__)

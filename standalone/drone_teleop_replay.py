@@ -1,5 +1,3 @@
-from omni.isaac.sensor import Camera
-
 from sim.app import init_app
 from utils import save_pickle
 
@@ -7,6 +5,7 @@ init_app()
 
 from pandas import read_pickle
 from drone.drone_env import DroneEnv
+from omni.isaac.sensor import Camera
 
 env = DroneEnv(layout_type="grid")
 
