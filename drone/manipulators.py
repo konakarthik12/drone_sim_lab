@@ -68,16 +68,10 @@ class Arms:
 
 
 class Manipulators:
-    def __init__(self, world, drone):
-        self.world = world
-        self.drone = drone
-
-    #
-
-
-class Manipulators:
     def __init__(self, world):
         self.world = world
+        self.arms = None
+        self.grippers = None
 
     def post_init(self, articulation):
         articulation = articulation
