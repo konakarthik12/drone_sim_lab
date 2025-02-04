@@ -25,7 +25,7 @@ class LocomotionEnv(IsaacEnv, gym.Env):
 
     def __init__(self, cfg: AntEnvCfg, **kwargs):
 
-        super().__init__(layout_type="air")
+        super().__init__(layout_type="grid")
 
         # store inputs to class
         self.cfg = cfg
