@@ -1,19 +1,14 @@
 import numpy as np
-
+from omni.isaac.lab.assets import ArticulationCfg
+from omni.isaac.lab.assets import Articulation
 
 
 class AntController:
-    def __init__(self, parent_env):
-        # from omni.isaac.core.articulations import Articulation
-        from omni.isaac.lab.assets import Articulation
+    def __init__(self, parent_env, ant_cfg:ArticulationCfg):
 
         self.world = parent_env.world
 
-        from animals.ant.ant_usd_cfg import get_ant_cfg
 
-        self.init_pose = (6, 0, 0.3)
-        self.scale = [0.045] * 3
-        ant_cfg = get_ant_cfg(self.init_pose, scale=self.scale)
         self.robot = Articulation(ant_cfg)
 
         num_dof = 5

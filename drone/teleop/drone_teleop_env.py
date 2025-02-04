@@ -11,7 +11,12 @@ from sim.isaac_env import IsaacEnv
 class DroneTeleOpEnv(IsaacEnv):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.ant_controller = ZeroAntController(parent_env=self)
+        from animals.ant.ant_usd_cfg import get_ant_cfg
+
+        self.init_pose = (6, 0, 0.3)
+        self.scale = [0.045] * 3
+        ant_cfg = get_ant_cfg(self.init_pose, scale=self.scale)
+        self.ant_controller = ZeroAntController(parent_env=self, ant_cfg=ant_cfg)
         self.drone_controller = DroneControllerQGroundControl(parent_env=self)
 
     # actual left and right joystick values are handled by the QGroundControl
