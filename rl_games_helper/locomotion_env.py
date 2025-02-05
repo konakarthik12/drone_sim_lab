@@ -29,14 +29,6 @@ class LocomotionEnv(IsaacEnv, gym.Env):
 
         self.sim = self.world
 
-        # print useful information
-        print("[INFO]: Base environment:")
-        print(f"\tEnvironment device    : {self.device}")
-        print(f"\tEnvironment seed      : {self.cfg.seed}")
-        print(f"\tPhysics step-size     : {self.physics_dt}")
-        print(f"\tRendering step-size   : {self.physics_dt * self.cfg.sim.render_interval}")
-        print(f"\tEnvironment step-size : {self.step_dt}")
-
         assert self.cfg.sim.render_interval >= self.cfg.decimation, "Render interval should not be smaller than decimation, this will cause multiple render calls."
 
         # -- init buffers
@@ -56,15 +48,6 @@ class LocomotionEnv(IsaacEnv, gym.Env):
         """Cleanup for the environment."""
         self.close()
 
-    """
-    Properties.
-    """
-
-    @property
-    def num_envs(self) -> int:
-        """The number of instances of the environment that are running."""
-        return 1
-
     @property
     def physics_dt(self) -> float:
         """The physics time-step (in s).
@@ -74,22 +57,9 @@ class LocomotionEnv(IsaacEnv, gym.Env):
         return self.cfg.sim.dt
 
     @property
-    def step_dt(self) -> float:
-        """The environment stepping time-step (in s).
-
-        This is the time-step at which the environment steps forward.
-        """
-        return self.cfg.sim.dt * self.cfg.decimation
-
-    @property
     def device(self):
         """The device on which the environment is running."""
         return self.sim.device
-
-
-    """
-    Operations.
-    """
 
     def reset(self, seed: int | None = None, options: dict[str, Any] | None = None) -> VecEnvObs:
 
@@ -98,8 +68,7 @@ class LocomotionEnv(IsaacEnv, gym.Env):
         # reset state of scene
         self.ant_controller.reset_idx()
 
-        # update articulation kinematics
-        self.ant_controller.robot.write_data_to_sim()
+
 
         # return observations
         return self.ant_controller.get_observations()
@@ -113,8 +82,6 @@ class LocomotionEnv(IsaacEnv, gym.Env):
     def pre_sub_step(self):
         # set actions into buffers
         self.ant_controller.apply_action()
-        # set actions into simulator
-        self.ant_controller.robot.write_data_to_sim()
 
     def sub_step(self):
 
@@ -128,7 +95,7 @@ class LocomotionEnv(IsaacEnv, gym.Env):
     def post_sub_step(self):
 
         # update buffers at sim dt
-        self.ant_controller.robot.update(self.physics_dt)
+        self.ant_controller.update()
 
     def post_step(self):
         self.sim.render()
@@ -143,12 +110,9 @@ class LocomotionEnv(IsaacEnv, gym.Env):
         # -- reset env if terminated/timed-out and log the episode information
         if self.reset_buf:
             self.ant_controller.reset_idx()
-            # update articulation kinematics
-            self.ant_controller.robot.write_data_to_sim()
+
 
         return self.ant_controller.get_observations()
-
-
 
     def step(self, action: torch.Tensor):
 
@@ -169,3 +133,4 @@ class LocomotionEnv(IsaacEnv, gym.Env):
 
     def post_init(self):
         self.ant_controller.post_init()
+

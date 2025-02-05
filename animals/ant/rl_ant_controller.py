@@ -49,6 +49,7 @@ class RlAntController(AntController):
     def apply_action(self):
         forces = self.action_scale * self.joint_gears * self.actions
         self.robot.set_joint_effort_target(forces, joint_ids=self.joint_dof_idx)
+        self.robot.write_data_to_sim()
 
     def _compute_intermediate_values(self):
         self.torso_position, self.torso_rotation = self.robot.data.root_link_pos_w.squeeze(), self.robot.data.root_link_quat_w.squeeze()
@@ -150,6 +151,11 @@ class RlAntController(AntController):
         self.potentials = -torch.norm(to_target, p=2, dim=-1) / self.cfg.sim.dt
 
         self._compute_intermediate_values()
+
+        self.robot.write_data_to_sim()
+
+    def update(self):
+        self.robot.update(self.cfg.sim.dt)
 
 
 @torch.jit.script
