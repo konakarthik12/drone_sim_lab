@@ -16,11 +16,10 @@ class IsaacEnv(gymnasium.Env):
         from omni.isaac.lab.sim import SimulationCfg
         from sim.fake_world import FakeWorld
 
-        sim_cfg = SimulationCfg(dt=1 / 250, render_interval=1, device="cpu")
-        sim_cfg.use_fabric = False
-
-        self.world: FakeWorld = FakeWorld(sim_cfg)
-
+        self.sim_cfg = SimulationCfg(dt=1 / 250, render_interval=1, device="cpu")
+        self.sim_cfg.use_fabric = False
+        self.world: FakeWorld = FakeWorld(self.sim_cfg)
+        self.sim = self.world
         self.load_layout(layout_type)
         self.init_reset = False
         self.seed(42)
@@ -85,7 +84,8 @@ class IsaacEnv(gymnasium.Env):
     def step(
             self, action: ActType
     ) -> tuple[ObsType, SupportsFloat, bool, bool, dict[str, Any]]:
-        self.world.step(render=True)
+        self.world.step(render=False)
+
         return {}, 0.0, False, False, {}
 
     def post_init(self):
