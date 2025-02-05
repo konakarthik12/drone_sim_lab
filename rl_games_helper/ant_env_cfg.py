@@ -13,6 +13,7 @@ from omni.isaac.lab.utils import configclass
 
 from animals.ant.ant_usd_cfg import get_ant_cfg
 
+
 @configclass
 class AntEnvCfg(DirectRLEnvCfg):
     # env
@@ -43,7 +44,7 @@ class AntEnvCfg(DirectRLEnvCfg):
     scene: InteractiveSceneCfg = InteractiveSceneCfg(num_envs=4096, env_spacing=0.5, replicate_physics=True)
 
     # robot
-    robot: ArticulationCfg = get_ant_cfg(init_pos=(6,0,0.5 * 0.045), scale=[0.045] * 3)
+    robot: ArticulationCfg = get_ant_cfg(init_pos=(6, 0, 0.5 * 0.045), scale=[0.045] * 3)
     joint_gears: list = [15, 15, 15, 15, 15, 15, 15, 15]
 
     heading_weight: float = 0.5
@@ -59,5 +60,3 @@ class AntEnvCfg(DirectRLEnvCfg):
 
     angular_velocity_scale: float = 1.0
     contact_force_scale: float = 0.1
-
-

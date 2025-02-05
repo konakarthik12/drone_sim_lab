@@ -11,9 +11,6 @@ class AntController:
 
         self.robot = Articulation(ant_cfg)
 
-        num_dof = 5
-        self.action_space = np.zeros((num_dof,), dtype=np.float32)
-
 
     def step(self, action):
         pass

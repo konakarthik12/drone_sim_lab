@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING
 import omni.isaac.core.utils.torch as torch_utils
 import torch
 from omni.isaac.core.utils.torch.rotations import compute_heading_and_up, compute_rot, quat_conjugate
-from omni.isaac.lab_tasks.utils import load_cfg_from_registry
 
 from animals.ant.ant_controller import AntController
 from rl_games_helper.ant_env_cfg import AntEnvCfg
@@ -24,16 +23,15 @@ class RlAntController(AntController):
     def __init__(self, parent_env: LocomotionEnv, env_cfg: AntEnvCfg):
         super().__init__(parent_env, env_cfg.robot)
         self.env = parent_env
-        self.cfg = env_cfg
+        self.env_cfg = env_cfg
+
+        self.observation_space = spec_to_gym_space(self.env_cfg.observation_space)
+        self.action_space = spec_to_gym_space(self.env_cfg.action_space)
 
         # -- init buffers
         self.reset_terminated = False
         self.reset_time_outs = False
         self.reset_buf = False
-
-        # setup the action and observation spaces for Gym
-        self.observation_space = spec_to_gym_space(self.cfg.observation_space)
-        self.action_space = spec_to_gym_space(self.cfg.action_space)
 
         self.sim = parent_env.world
         self.action_scale = env_cfg.action_scale
@@ -54,53 +52,14 @@ class RlAntController(AntController):
         self.actions = sample_space(self.action_space, self.sim.device, batch_size=1, fill_value=0)
 
         self.episode_length = 0
-        self.max_episode_length = math.ceil(self.cfg.episode_length_s / (self.cfg.sim.dt * self.cfg.decimation))
+        self.max_episode_length = math.ceil(
+            self.env_cfg.episode_length_s / (self.env_cfg.sim.dt * self.env_cfg.decimation))
         self.joint_dof_idx = None
-
-        from animals.ant.rl.agent import Agent
-
-        agent_cfg = load_cfg_from_registry(TASK_NAME, "rl_games_cfg_entry_point")
-
-        agent_cfg["params"]["config"]["device"] = "cpu"
-        agent_cfg["params"]["config"]["device_name"] = "cpu"
-        # ant_controller = self.ant_controller
-        self.agent = Agent(agent_cfg, self.observation_space, self.action_space, RESUME_PATH)
-
-        self.current_step = 0
         self.last_obs = None
 
     def post_init(self):
         self.joint_dof_idx, _ = self.robot.find_joints(".*")
 
-
-    def pre_decimation(self):
-        action = self.agent.get_action(self.last_obs)
-        self.actions = action.clone()
-
-
-    def pre_step(self):
-        if self.current_step % self.cfg.decimation == 0:
-            self.pre_decimation()
-        self.apply_action()
-
-    def post_step(self):
-        self.robot.update(self.cfg.sim.dt)
-
-        self.current_step += 1
-        if self.current_step % self.cfg.decimation == 0:
-            self.post_decimation()
-
-    def post_decimation(self):
-        # -- update env counters (used for curriculum generation)
-        self.episode_length += 1  # step in current episode
-
-        self.reset_terminated, self.reset_time_outs = self.get_dones()
-        self.reset_buf = self.reset_terminated or self.reset_time_outs
-
-        # -- reset env if terminated/timed-out and log the episode information
-        if self.reset_buf: self.reset_idx()
-
-        self.update_obs()
     def apply_action(self):
         forces = self.action_scale * self.joint_gears * self.actions
         self.robot.set_joint_effort_target(forces, joint_ids=self.joint_dof_idx)
@@ -139,7 +98,7 @@ class RlAntController(AntController):
             self.basis_vec1,
             self.potentials,
             self.prev_potentials,
-            self.cfg.sim.dt,
+            self.env_cfg.sim.dt,
         )
 
     def update_obs(self):
@@ -147,14 +106,14 @@ class RlAntController(AntController):
             (
                 self.torso_position[2].unsqueeze(0),
                 self.vel_loc,
-                (self.angvel_loc * self.cfg.angular_velocity_scale),
+                (self.angvel_loc * self.env_cfg.angular_velocity_scale),
                 normalize_angle(self.yaw),
                 normalize_angle(self.roll),
                 normalize_angle(self.angle_to_target),
                 self.up_proj,
                 self.heading_proj,
                 self.dof_pos_scaled,
-                self.dof_vel * self.cfg.dof_vel_scale,
+                self.dof_vel * self.env_cfg.dof_vel_scale,
                 self.actions.squeeze(0),
             ),
             dim=-1,
@@ -165,19 +124,19 @@ class RlAntController(AntController):
         total_reward = compute_rewards(
             self.actions,
             reset_terminated,
-            self.cfg.up_weight,
-            self.cfg.heading_weight,
+            self.env_cfg.up_weight,
+            self.env_cfg.heading_weight,
             self.heading_proj,
             self.up_proj,
             self.dof_vel,
             self.dof_pos_scaled,
             self.potentials,
             self.prev_potentials,
-            self.cfg.actions_cost_scale,
-            self.cfg.energy_cost_scale,
-            self.cfg.dof_vel_scale,
-            self.cfg.death_cost,
-            self.cfg.alive_reward_scale,
+            self.env_cfg.actions_cost_scale,
+            self.env_cfg.energy_cost_scale,
+            self.env_cfg.dof_vel_scale,
+            self.env_cfg.death_cost,
+            self.env_cfg.alive_reward_scale,
             self.motor_effort_ratio,
         )
         return total_reward
@@ -185,7 +144,7 @@ class RlAntController(AntController):
     def get_dones(self):
         self._compute_intermediate_values()
         time_out = self.episode_length >= self.max_episode_length - 1
-        died = self.torso_position[2] < self.cfg.termination_height
+        died = self.torso_position[2] < self.env_cfg.termination_height
         return died, time_out
 
     def reset_idx(self):
@@ -200,21 +159,13 @@ class RlAntController(AntController):
 
         to_target = self.targets - default_root_state[:, :3]
         to_target[:, 2] = 0.0
-        self.potentials = -torch.norm(to_target, p=2, dim=-1) / self.cfg.sim.dt
+        self.potentials = -torch.norm(to_target, p=2, dim=-1) / self.env_cfg.sim.dt
 
         self._compute_intermediate_values()
 
         self.robot.write_data_to_sim()
 
 
-
-    def reset(self):
-        # reset state of scene
-        self.reset_idx()
-
-        # return observations
-        self.update_obs()
-        self.agent.init(self.last_obs)
 @torch.jit.script
 def compute_rewards(
         actions: torch.Tensor,
@@ -269,7 +220,7 @@ def compute_rewards(
     return total_reward
 
 
-# @torch.jit.script
+@torch.jit.script
 def compute_intermediate_values(
         targets: torch.Tensor,
         torso_position: torch.Tensor,

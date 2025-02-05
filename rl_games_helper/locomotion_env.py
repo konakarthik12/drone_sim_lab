@@ -3,11 +3,10 @@ from __future__ import annotations
 from typing import Any
 
 import gymnasium as gym
-import torch
 from omni.isaac.lab.envs.common import VecEnvObs
 from omni.isaac.version import get_version
 
-from animals.ant.rl_ant_controller import RlAntController
+from animals.ant.pretrained_rl_ant_controller import PretrainedRlAntController
 from rl_games_helper.ant_env_cfg import AntEnvCfg
 from sim.isaac_env import IsaacEnv
 
@@ -29,7 +28,7 @@ class LocomotionEnv(IsaacEnv, gym.Env):
 
         # print the environment information
         print("[INFO]: Completed setting up the environment...")
-        self.ant_controller = RlAntController(parent_env=self, env_cfg=cfg)
+        self.ant_controller = PretrainedRlAntController(parent_env=self, env_cfg=cfg)
 
 
     def reset(self, seed: int | None = None, options: dict[str, Any] | None = None) -> VecEnvObs:
