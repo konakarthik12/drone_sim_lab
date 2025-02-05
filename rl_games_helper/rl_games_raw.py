@@ -27,5 +27,6 @@ def register_rl_games_env(env: LocomotionEnv):
 
             self.action_space = gym.spaces.Box(-self._clip_actions, self._clip_actions, env.action_space.shape)
 
-        env_configurations.register("rlgpu", {"vecenv_type": "IsaacRlgWrapper",
+
+    env_configurations.register("rlgpu", {"vecenv_type": "IsaacRlgWrapper",
                                               "env_creator": lambda **kwargs: RlGamesVecEnvWrapper()})
