@@ -236,15 +236,12 @@ class LocomotionEnv(IsaacEnv, gym.Env):
         return self.ant_controller.get_dones(self.episode_length, self.max_episode_length)
 
     def reset_idx(self):
-        self.reset_scene()
         self.episode_length = 0
         self.ant_controller.reset_idx()
 
     def write_scene_data_to_sim(self):
         self.ant_controller.robot.write_data_to_sim()
 
-    def reset_scene(self):
-        self.ant_controller.robot.reset()
 
     def update_scene(self, dt: float):
         self.ant_controller.robot.update(dt)

@@ -128,6 +128,7 @@ class RlAntController(AntController):
         return died, time_out
 
     def reset_idx(self):
+        self.robot.reset()
         joint_pos = self.robot.data.default_joint_pos
         joint_vel = self.robot.data.default_joint_vel
         default_root_state = self.robot.data.default_root_state
