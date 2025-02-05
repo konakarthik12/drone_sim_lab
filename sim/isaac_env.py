@@ -9,20 +9,6 @@ import omni.isaac.core.utils.torch as torch_utils
 
 class IsaacEnv(gymnasium.Env):
     def __init__(self, layout_type="air"):
-        # DISP_FPS = 1 << 0
-        # # DISP_AXIS = 1 << 1
-        # DISP_RESOLUTION = 1 << 3
-        # # DISP_SKELETON = 1 << 9
-        # DISP_MESH = 1 << 10
-        # # DISP_PROGRESS = 1 << 11
-        # DISP_DEV_MEM = 1 << 13
-        # DISP_HOST_MEM = 1 << 14
-        # self.headless = headless
-        # self.app = SimulationApp({
-        #     "headless": headless,
-        #     "anti_aliasing": 0,
-        #     "display_options": DISP_FPS | DISP_RESOLUTION | DISP_MESH | DISP_DEV_MEM | DISP_HOST_MEM,
-        # })
         from omni.isaac.kit import SimulationApp
         from sim.app import get_app
         self.app: SimulationApp = get_app()
@@ -37,6 +23,9 @@ class IsaacEnv(gymnasium.Env):
 
         self.load_layout(layout_type)
         self.init_reset = False
+        self.seed(42)
+
+
     def get_world_settings(self):
         return {}
 

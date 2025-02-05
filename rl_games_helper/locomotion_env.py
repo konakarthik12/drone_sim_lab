@@ -27,7 +27,6 @@ class LocomotionEnv(IsaacEnv, gym.Env):
 
         self.cfg = cfg
 
-        self.seed(42)
         self.sim = self.world
 
         # print useful information
