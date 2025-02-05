@@ -23,26 +23,23 @@ class LocomotionEnv(IsaacEnv, gym.Env):
     def __init__(self, cfg: AntEnvCfg):
         super().__init__(layout_type="grid")
 
-        self.cfg = cfg
 
         self.sim = self.world
 
-        assert self.cfg.sim.render_interval >= self.cfg.decimation, "Render interval should not be smaller than decimation, this will cause multiple render calls."
 
         # print the environment information
         print("[INFO]: Completed setting up the environment...")
-        self.ant_controller = RlAntController(parent_env=self, env_cfg=self.cfg)
-        self.current_step = 0
-        self.last_obs = None
+        self.ant_controller = RlAntController(parent_env=self, env_cfg=cfg)
+
 
     def reset(self, seed: int | None = None, options: dict[str, Any] | None = None) -> VecEnvObs:
         super().reset(seed, options)
-        self.last_obs = self.ant_controller.reset()
-        self.ant_controller.agent.init(self.last_obs)
+        self.ant_controller.last_obs = self.ant_controller.reset()
+        self.ant_controller.agent.init(self.ant_controller.last_obs)
 
     def pre_step(self):
-        if self.current_step % self.cfg.decimation == 0:
-            action = self.ant_controller.agent.get_action(self.last_obs)
+        if self.ant_controller.current_step % self.ant_controller.cfg.decimation == 0:
+            action = self.ant_controller.agent.get_action(self.ant_controller.last_obs)
             # process actions
             self.ant_controller.pre_physics_step(action)
             # set actions into buffers
@@ -55,11 +52,10 @@ class LocomotionEnv(IsaacEnv, gym.Env):
         # if self._sim_step_counter % round(self.cfg.sim.render_interval) == 0:
         # update buffers at sim dt
         self.ant_controller.update()
-        if self.current_step % self.cfg.decimation == 0:
-            self.sim.render()
-        self.current_step += 1
-        if self.current_step % self.cfg.decimation == 0:
-            self.last_obs = self.ant_controller.post_step()
+
+        self.ant_controller.current_step += 1
+        if self.ant_controller.current_step % self.ant_controller.cfg.decimation == 0:
+            self.ant_controller.last_obs = self.ant_controller.post_step()
 
     def step(self, _):
 

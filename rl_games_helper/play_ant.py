@@ -7,7 +7,6 @@ from utils import add_gamepad_callback, set_active_camera
 from torch import Tensor
 from ant_env_cfg import AntEnvCfg
 import omni.isaac.lab_tasks  # noqa: F401
-from omni.isaac.lab_tasks.utils import load_cfg_from_registry
 from drone.manipulators import ManipulatorState
 
 
@@ -60,12 +59,14 @@ while app.is_running():
     # drone_controller.step(mani_state.as_action())
     count += 1
     if count == 4:
-        assert sha1_array(env.last_obs) == "3cbeb8f5a1e73b228b90ffdbca2a073b0557bedd"
+        assert sha1_array(env.ant_controller.last_obs) == "3cbeb8f5a1e73b228b90ffdbca2a073b0557bedd"
     for _ in range(4):
         env.step(None)
-    obs = env.last_obs
 
-last_sha = sha1_array(env.last_obs)
+    env.sim.render()
+    obs = env.ant_controller.last_obs
+
+last_sha = sha1_array(env.ant_controller.last_obs)
 # close the simulator
 env.close()
 

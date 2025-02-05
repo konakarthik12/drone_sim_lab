@@ -67,6 +67,9 @@ class RlAntController(AntController):
         # ant_controller = self.ant_controller
         self.agent = Agent(agent_cfg, self.observation_space, self.action_space, RESUME_PATH)
 
+        self.current_step = 0
+        self.last_obs = None
+
     def post_init(self):
         self.joint_dof_idx, _ = self.robot.find_joints(".*")
 
