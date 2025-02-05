@@ -24,7 +24,6 @@ class IsaacEnv(gymnasium.Env):
         self.init_reset = False
         self.seed(42)
 
-
     def get_world_settings(self):
         return {}
 
@@ -118,7 +117,6 @@ class IsaacEnv(gymnasium.Env):
         self.sim.clear_all_callbacks()
         self.sim.clear_instance()
 
-
     @staticmethod
     def seed(seed: int = -1) -> int:
         """Set the seed for the environment.
@@ -138,3 +136,10 @@ class IsaacEnv(gymnasium.Env):
             pass
         # set seed for torch and other libraries
         return torch_utils.set_seed(seed)
+
+    def __del__(self):
+        self.close()
+
+    def close(self):
+        self.sim.clear_all_callbacks()
+        self.sim.clear_instance()
