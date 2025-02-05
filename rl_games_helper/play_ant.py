@@ -24,7 +24,7 @@ from rl_games_helper.locomotion_env import LocomotionEnv
 
 # create isaac environment
 env = LocomotionEnv(env_cfg)
-from drone.drone_controller_qgroundcontrol import DroneControllerQGroundControl
+
 
 # create drone controller
 # drone_controller = DroneControllerQGroundControl(env)
@@ -45,7 +45,7 @@ def sha1_array(arr: Tensor):
 
     return sha1_hash
 
-from agent import Agent
+from animals.ant.rl.agent import Agent
 agent_cfg = load_cfg_from_registry(task_name, "rl_games_cfg_entry_point")
 
 agent_cfg["params"]["config"]["device"] = "cpu"
@@ -71,9 +71,9 @@ while app.is_running():
     count += 1
     if count ==4:
         assert sha1_array(obs) == "3cbeb8f5a1e73b228b90ffdbca2a073b0557bedd"
-
-    # perform environment step
-    obs= env.step(actions)
+    for _ in range(4):
+        env.step(actions)
+    obs = env.post_decimation()
 
 last_sha = sha1_array(obs)
 # close the simulator

@@ -32,6 +32,7 @@ class LocomotionEnv(IsaacEnv, gym.Env):
         # print the environment information
         print("[INFO]: Completed setting up the environment...")
         self.ant_controller = RlAntController(parent_env=self, env_cfg=self.cfg)
+        self.current_step = 0
 
     def __del__(self):
         """Cleanup for the environment."""
@@ -41,24 +42,32 @@ class LocomotionEnv(IsaacEnv, gym.Env):
         super().reset(seed, options)
         return self.ant_controller.reset()
 
-    def step(self, action: torch.Tensor):
-        # process actions
-        self.ant_controller.pre_physics_step(action)
-
-        # perform physics stepping
-        for _ in range(self.cfg.decimation):
+    def pre_step(self, action: torch.Tensor):
+        if self.current_step % self.cfg.decimation == 0:
+            # process actions
+            self.ant_controller.pre_physics_step(action)
             # set actions into buffers
-            self.ant_controller.apply_action()
-            # simulate
-            self.sim.step(render=False)
-            # render between steps only if the GUI or an RTX sensor needs it
-            # note: we assume the render interval to be the shortest accepted rendering interval.
-            #    If a camera needs rendering at a faster frequency, this will lead to unexpected behavior.
-            # if self._sim_step_counter % round(self.cfg.sim.render_interval) == 0:
-            # update buffers at sim dt
-            self.ant_controller.update()
+        self.ant_controller.apply_action()
 
-        self.sim.render()
+    def post_step(self):
+        # render between steps only if the GUI or an RTX sensor needs it
+        # note: we assume the render interval to be the shortest accepted rendering interval.
+        #    If a camera needs rendering at a faster frequency, this will lead to unexpected behavior.
+        # if self._sim_step_counter % round(self.cfg.sim.render_interval) == 0:
+        # update buffers at sim dt
+        self.ant_controller.update()
+        if self.current_step % self.cfg.decimation == 0:
+            self.sim.render()
+        self.current_step += 1
+
+    def step(self, action: torch.Tensor):
+
+        self.pre_step(action)
+        # simulate
+        super().step(action)
+        self.post_step()
+
+    def post_decimation(self):
         return self.ant_controller.post_step()
 
     def close(self):
