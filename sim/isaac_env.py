@@ -39,7 +39,6 @@ class IsaacEnv(gymnasium.Env):
 
         self.load_layout(layout_type)
         self.init_reset = False
-
     def get_world_settings(self):
         return {}
 
@@ -114,5 +113,30 @@ class IsaacEnv(gymnasium.Env):
         return {}, 0.0, False, False, {}
     def post_init(self):
         pass
-    # def render(self) -> RenderFrame | list[RenderFrame] | None:
-    #     return self.world.render(mode="human")
+
+    @staticmethod
+    def seed(seed: int = -1) -> int:
+        """Set the seed for the environment.
+
+        Args:
+            seed: The seed for random generator. Defaults to -1.
+
+        Returns:
+            The seed used for random generator.
+        """
+        # set seed for replicator
+        try:
+            import omni.replicator.core as rep
+
+            rep.set_global_seed(seed)
+        except ModuleNotFoundError:
+            pass
+        # set seed for torch and other libraries
+        return torch_utils.set_seed(seed)
+
+    def __del__(self):
+        self.close()
+
+    def close(self):
+        self.sim.clear_all_callbacks()
+        self.sim.clear_instance()
