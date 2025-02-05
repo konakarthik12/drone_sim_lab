@@ -48,18 +48,7 @@ class LocomotionEnv(IsaacEnv, gym.Env):
         """Cleanup for the environment."""
         self.close()
 
-    @property
-    def physics_dt(self) -> float:
-        """The physics time-step (in s).
 
-        This is the lowest time-decimation at which the simulation is happening.
-        """
-        return self.cfg.sim.dt
-
-    @property
-    def device(self):
-        """The device on which the environment is running."""
-        return self.sim.device
 
     def reset(self, seed: int | None = None, options: dict[str, Any] | None = None) -> VecEnvObs:
 
@@ -74,7 +63,7 @@ class LocomotionEnv(IsaacEnv, gym.Env):
         return self.ant_controller.get_observations()
 
     def pre_step(self, action):
-        action = action.to(self.device)
+        action = action.to(self.sim.device)
 
         # process actions
         self.ant_controller.pre_physics_step(action)

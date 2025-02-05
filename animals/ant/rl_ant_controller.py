@@ -20,6 +20,7 @@ class RlAntController(AntController):
     def __init__(self, parent_env: LocomotionEnv, env_cfg: AntEnvCfg):
         super().__init__(parent_env, env_cfg.robot)
         self.env = parent_env
+
         self.sim = parent_env.world
         self.cfg = env_cfg
         self.action_scale = env_cfg.action_scale
