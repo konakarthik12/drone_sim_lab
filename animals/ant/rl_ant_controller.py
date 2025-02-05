@@ -8,6 +8,7 @@ import torch
 from omni.isaac.core.utils.torch.rotations import compute_heading_and_up, compute_rot, quat_conjugate
 
 from animals.ant.ant_controller import AntController
+from animals.ant.rl.agent import Agent
 from rl_games_helper.ant_env_cfg import AntEnvCfg
 
 if TYPE_CHECKING:
@@ -52,6 +53,8 @@ class RlAntController(AntController):
         self.episode_length = 0
         self.max_episode_length = math.ceil(self.cfg.episode_length_s / (self.cfg.sim.dt * self.cfg.decimation))
         self.joint_dof_idx = None
+
+        self.agent:Agent = None
 
     def post_init(self):
         self.joint_dof_idx, _ = self.robot.find_joints(".*")
@@ -98,7 +101,6 @@ class RlAntController(AntController):
         )
 
     def pre_physics_step(self, actions):
-        actions = actions.to(self.sim.device)
         self.actions = actions.clone()
 
     def get_observations(self):

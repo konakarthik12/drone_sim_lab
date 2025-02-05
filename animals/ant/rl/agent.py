@@ -5,7 +5,7 @@ from rl_games.common.player import BasePlayer
 from rl_games.common.vecenv import IVecEnv
 from rl_games.torch_runner import Runner
 
-from rl_games_helper.locomotion_env import LocomotionEnv
+from sim.isaac_env import IsaacEnv
 
 
 def register_rl_games_env(observation_space, action_space):
@@ -30,9 +30,9 @@ def register_rl_games_env(observation_space, action_space):
 
 
 class Agent:
-    def __init__(self, env: LocomotionEnv, agent_cfg, resume_path, num_envs=1):
+    def __init__(self, agent_cfg, observation_space, action_space, resume_path, num_envs=1):
         # wrap around environment for rl-games
-        register_rl_games_env(env.observation_space, env.action_space)
+        register_rl_games_env(observation_space, action_space)
         # load previously trained model
         agent_cfg["params"]["load_checkpoint"] = True
         agent_cfg["params"]["load_path"] = resume_path

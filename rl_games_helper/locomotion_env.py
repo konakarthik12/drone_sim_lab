@@ -43,8 +43,9 @@ class LocomotionEnv(IsaacEnv, gym.Env):
         super().reset(seed, options)
         self.last_obs = self.ant_controller.reset()
 
-    def pre_step(self, action: torch.Tensor):
+    def pre_step(self):
         if self.current_step % self.cfg.decimation == 0:
+            action = self.ant_controller.agent.get_action(self.last_obs)
             # process actions
             self.ant_controller.pre_physics_step(action)
             # set actions into buffers
@@ -63,11 +64,11 @@ class LocomotionEnv(IsaacEnv, gym.Env):
         if self.current_step % self.cfg.decimation == 0:
             self.last_obs = self.ant_controller.post_step()
 
-    def step(self, action: torch.Tensor):
+    def step(self, _):
 
-        self.pre_step(action)
+        self.pre_step()
         # simulate
-        super().step(action)
+        super().step(None)
         self.post_step()
 
 

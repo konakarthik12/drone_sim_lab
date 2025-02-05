@@ -1,4 +1,3 @@
-
 from sim.app import init_app, get_app
 
 init_app(headless=False)
@@ -10,7 +9,6 @@ from ant_env_cfg import AntEnvCfg
 import omni.isaac.lab_tasks  # noqa: F401
 from omni.isaac.lab_tasks.utils import load_cfg_from_registry
 from drone.manipulators import ManipulatorState
-
 
 task_name = "Isaac-Ant-Direct-v0"
 resume_path = "/home/kkona/Documents/research/drone_sim_lab/assets/animals/ant_direct_policy.pth"
@@ -45,20 +43,23 @@ def sha1_array(arr: Tensor):
 
     return sha1_hash
 
+
 from animals.ant.rl.agent import Agent
+
 agent_cfg = load_cfg_from_registry(task_name, "rl_games_cfg_entry_point")
 
 agent_cfg["params"]["config"]["device"] = "cpu"
 agent_cfg["params"]["config"]["device_name"] = "cpu"
 set_active_camera("/World/drone/arm/arm_base/Camera")
-agent = Agent(env.ant_controller, agent_cfg, resume_path)
+ant_controller = env.ant_controller
+ant_controller.agent = Agent(agent_cfg, ant_controller.observation_space, ant_controller.action_space, resume_path, )
 mani_state = ManipulatorState()
 add_gamepad_callback(mani_state.gamepad_callback)
 # reset environment
 env.reset()
 obs = env.last_obs
 # drone_controller.post_init()
-agent.init(obs)
+ant_controller.agent.init(obs)
 # simulate environment
 # note: We simplified the logic in rl-games player.py (:func:`BasePlayer.run()`) function in an
 #   attempt to have complete control over environment stepping. However, this removes other
@@ -67,13 +68,12 @@ count = 0
 
 while app.is_running():
 
-    actions = agent.get_action(obs)
     # drone_controller.step(mani_state.as_action())
     count += 1
-    if count ==4:
+    if count == 4:
         assert sha1_array(obs) == "3cbeb8f5a1e73b228b90ffdbca2a073b0557bedd"
     for _ in range(4):
-        env.step(actions)
+        env.step(None)
     obs = env.last_obs
 
 last_sha = sha1_array(obs)
