@@ -1,20 +1,20 @@
 from __future__ import annotations
 
 import math
+from typing import TYPE_CHECKING
 
 import omni.isaac.core.utils.torch as torch_utils
 import torch
 from omni.isaac.core.utils.torch.rotations import compute_heading_and_up, compute_rot, quat_conjugate
-from omni.isaac.lab.assets import Articulation
 
 from animals.ant.ant_controller import AntController
 from rl_games_helper.ant_env_cfg import AntEnvCfg
-from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from rl_games_helper.locomotion_env import LocomotionEnv
 
 from omni.isaac.lab.envs.utils.spaces import sample_space
-import omni.isaac.lab.sim as sim_utils
+
 
 class RlAntController(AntController):
     def __init__(self, parent_env: LocomotionEnv, env_cfg: AntEnvCfg):
@@ -41,13 +41,14 @@ class RlAntController(AntController):
 
         self.episode_length = 0
         self.max_episode_length =  math.ceil(self.cfg.episode_length_s / (self.cfg.sim.dt * self.cfg.decimation))
+        self.joint_dof_idx = None
 
     def post_init(self):
-        self._joint_dof_idx, _ = self.robot.find_joints(".*")
+        self.joint_dof_idx, _ = self.robot.find_joints(".*")
 
     def apply_action(self):
         forces = self.action_scale * self.joint_gears * self.actions
-        self.robot.set_joint_effort_target(forces, joint_ids=self._joint_dof_idx)
+        self.robot.set_joint_effort_target(forces, joint_ids=self.joint_dof_idx)
 
     def _compute_intermediate_values(self):
         self.torso_position, self.torso_rotation = self.robot.data.root_link_pos_w.squeeze(), self.robot.data.root_link_quat_w.squeeze()

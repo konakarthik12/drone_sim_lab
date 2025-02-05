@@ -25,7 +25,6 @@ class LocomotionEnv(IsaacEnv, gym.Env):
 
         super().__init__(layout_type="grid")
 
-        # store inputs to class
         self.cfg = cfg
 
         self.seed(42)
@@ -53,9 +52,6 @@ class LocomotionEnv(IsaacEnv, gym.Env):
         # print the environment information
         print("[INFO]: Completed setting up the environment...")
         self.ant_controller = RlAntController(parent_env=self, env_cfg=self.cfg)
-
-        self.obs_buf = None
-        self.reward_buf = None
 
     def __del__(self):
         """Cleanup for the environment."""
@@ -144,7 +140,6 @@ class LocomotionEnv(IsaacEnv, gym.Env):
 
         self.reset_terminated, self.reset_time_outs = self.ant_controller.get_dones()
         self.reset_buf = self.reset_terminated or self.reset_time_outs
-        self.reward_buf = self.ant_controller.get_rewards(self.reset_terminated)
 
         # -- reset env if terminated/timed-out and log the episode information
         if self.reset_buf:
@@ -152,11 +147,9 @@ class LocomotionEnv(IsaacEnv, gym.Env):
             # update articulation kinematics
             self.ant_controller.robot.write_data_to_sim()
 
-        # update observations
-        self.obs_buf = self.ant_controller.get_observations()
+        return self.ant_controller.get_observations()
 
-        # return observations, rewards, resets and extras
-        return self.obs_buf
+
 
     def step(self, action: torch.Tensor):
 
