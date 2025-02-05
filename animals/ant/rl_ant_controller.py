@@ -71,22 +71,36 @@ class RlAntController(AntController):
 
     def post_init(self):
         self.joint_dof_idx, _ = self.robot.find_joints(".*")
+
+
+    def pre_decimation(self):
+        action = self.agent.get_action(self.last_obs)
+        self.actions = action.clone()
+
+
     def pre_step(self):
         if self.current_step % self.cfg.decimation == 0:
             self.pre_decimation()
         self.apply_action()
 
     def post_step(self):
-        # render between steps only if the GUI or an RTX sensor needs it
-        # note: we assume the render interval to be the shortest accepted rendering interval.
-        #    If a camera needs rendering at a faster frequency, this will lead to unexpected behavior.
-        # if self._sim_step_counter % round(self.cfg.sim.render_interval) == 0:
-        # update buffers at sim dt
-        self.update()
+        self.robot.update(self.cfg.sim.dt)
 
         self.current_step += 1
         if self.current_step % self.cfg.decimation == 0:
             self.post_decimation()
+
+    def post_decimation(self):
+        # -- update env counters (used for curriculum generation)
+        self.episode_length += 1  # step in current episode
+
+        self.reset_terminated, self.reset_time_outs = self.get_dones()
+        self.reset_buf = self.reset_terminated or self.reset_time_outs
+
+        # -- reset env if terminated/timed-out and log the episode information
+        if self.reset_buf: self.reset_idx()
+
+        self.update_obs()
     def apply_action(self):
         forces = self.action_scale * self.joint_gears * self.actions
         self.robot.set_joint_effort_target(forces, joint_ids=self.joint_dof_idx)
@@ -128,7 +142,7 @@ class RlAntController(AntController):
             self.cfg.sim.dt,
         )
 
-    def get_observations(self):
+    def update_obs(self):
         obs = torch.cat(
             (
                 self.torso_position[2].unsqueeze(0),
@@ -145,7 +159,7 @@ class RlAntController(AntController):
             ),
             dim=-1,
         ).unsqueeze(0)
-        return obs
+        self.last_obs = obs
 
     def get_rewards(self, reset_terminated):
         total_reward = compute_rewards(
@@ -192,30 +206,15 @@ class RlAntController(AntController):
 
         self.robot.write_data_to_sim()
 
-    def update(self):
-        self.robot.update(self.cfg.sim.dt)
-    def pre_decimation(self):
-        action = self.agent.get_action(self.last_obs)
-        self.actions = action.clone()
 
-    def post_decimation(self):
-        # -- update env counters (used for curriculum generation)
-        self.episode_length += 1  # step in current episode
-
-        self.reset_terminated, self.reset_time_outs = self.get_dones()
-        self.reset_buf = self.reset_terminated or self.reset_time_outs
-
-        # -- reset env if terminated/timed-out and log the episode information
-        if self.reset_buf: self.reset_idx()
-
-        self.last_obs = self.get_observations()
 
     def reset(self):
         # reset state of scene
         self.reset_idx()
 
         # return observations
-        return self.get_observations()
+        self.update_obs()
+        self.agent.init(self.last_obs)
 @torch.jit.script
 def compute_rewards(
         actions: torch.Tensor,
