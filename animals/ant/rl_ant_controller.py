@@ -13,16 +13,25 @@ from rl_games_helper.ant_env_cfg import AntEnvCfg
 if TYPE_CHECKING:
     from rl_games_helper.locomotion_env import LocomotionEnv
 
-from omni.isaac.lab.envs.utils.spaces import sample_space
+from omni.isaac.lab.envs.utils.spaces import sample_space, spec_to_gym_space
 
 
 class RlAntController(AntController):
     def __init__(self, parent_env: LocomotionEnv, env_cfg: AntEnvCfg):
         super().__init__(parent_env, env_cfg.robot)
         self.env = parent_env
+        self.cfg = env_cfg
+
+        # -- init buffers
+        self.reset_terminated = False
+        self.reset_time_outs = False
+        self.reset_buf = False
+
+        # setup the action and observation spaces for Gym
+        self.observation_space = spec_to_gym_space(self.cfg.observation_space)
+        self.action_space = spec_to_gym_space(self.cfg.action_space)
 
         self.sim = parent_env.world
-        self.cfg = env_cfg
         self.action_scale = env_cfg.action_scale
         self.joint_gears = torch.tensor(env_cfg.joint_gears, dtype=torch.float32, device=self.sim.device)
         self.motor_effort_ratio = torch.ones_like(self.joint_gears, device=self.sim.device)
@@ -38,10 +47,10 @@ class RlAntController(AntController):
         self.basis_vec1 = self.up_vec.clone()
 
         # instantiate actions (needed for tasks for which the observations computation is dependent on the actions)
-        self.actions = sample_space(self.env.action_space, self.sim.device, batch_size=1, fill_value=0)
+        self.actions = sample_space(self.action_space, self.sim.device, batch_size=1, fill_value=0)
 
         self.episode_length = 0
-        self.max_episode_length =  math.ceil(self.cfg.episode_length_s / (self.cfg.sim.dt * self.cfg.decimation))
+        self.max_episode_length = math.ceil(self.cfg.episode_length_s / (self.cfg.sim.dt * self.cfg.decimation))
         self.joint_dof_idx = None
 
     def post_init(self):
@@ -89,6 +98,7 @@ class RlAntController(AntController):
         )
 
     def pre_physics_step(self, actions):
+        actions = actions.to(self.sim.device)
         self.actions = actions.clone()
 
     def get_observations(self):
@@ -158,7 +168,24 @@ class RlAntController(AntController):
     def update(self):
         self.robot.update(self.cfg.sim.dt)
 
+    def post_step(self):
+        # -- update env counters (used for curriculum generation)
+        self.episode_length += 1  # step in current episode
 
+        self.reset_terminated, self.reset_time_outs = self.get_dones()
+        self.reset_buf = self.reset_terminated or self.reset_time_outs
+
+        # -- reset env if terminated/timed-out and log the episode information
+        if self.reset_buf: self.reset_idx()
+
+        return self.get_observations()
+
+    def reset(self):
+        # reset state of scene
+        self.reset_idx()
+
+        # return observations
+        return self.get_observations()
 @torch.jit.script
 def compute_rewards(
         actions: torch.Tensor,

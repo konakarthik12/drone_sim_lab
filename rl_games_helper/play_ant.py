@@ -51,7 +51,7 @@ agent_cfg = load_cfg_from_registry(task_name, "rl_games_cfg_entry_point")
 agent_cfg["params"]["config"]["device"] = "cpu"
 agent_cfg["params"]["config"]["device_name"] = "cpu"
 set_active_camera("/World/drone/arm/arm_base/Camera")
-agent = Agent(env, agent_cfg, resume_path)
+agent = Agent(env.ant_controller, agent_cfg, resume_path)
 mani_state = ManipulatorState()
 add_gamepad_callback(mani_state.gamepad_callback)
 # reset environment
