@@ -10,8 +10,6 @@ import omni.isaac.lab_tasks  # noqa: F401
 from omni.isaac.lab_tasks.utils import load_cfg_from_registry
 from drone.manipulators import ManipulatorState
 
-task_name = "Isaac-Ant-Direct-v0"
-resume_path = "/home/kkona/Documents/research/drone_sim_lab/assets/animals/ant_direct_policy.pth"
 
 import omni.isaac.lab_tasks  # noqa: F401
 
@@ -43,16 +41,9 @@ def sha1_array(arr: Tensor):
 
     return sha1_hash
 
-
-from animals.ant.rl.agent import Agent
-
-agent_cfg = load_cfg_from_registry(task_name, "rl_games_cfg_entry_point")
-
-agent_cfg["params"]["config"]["device"] = "cpu"
-agent_cfg["params"]["config"]["device_name"] = "cpu"
 set_active_camera("/World/drone/arm/arm_base/Camera")
-ant_controller = env.ant_controller
-ant_controller.agent = Agent(agent_cfg, ant_controller.observation_space, ant_controller.action_space, resume_path, )
+
+
 mani_state = ManipulatorState()
 add_gamepad_callback(mani_state.gamepad_callback)
 # reset environment

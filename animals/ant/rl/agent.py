@@ -7,7 +7,6 @@ from rl_games.torch_runner import Runner
 
 from sim.isaac_env import IsaacEnv
 
-
 def register_rl_games_env(observation_space, action_space):
     class RlGamesVecEnvWrapper(IVecEnv):
 

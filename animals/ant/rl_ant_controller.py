@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 import omni.isaac.core.utils.torch as torch_utils
 import torch
 from omni.isaac.core.utils.torch.rotations import compute_heading_and_up, compute_rot, quat_conjugate
+from omni.isaac.lab_tasks.utils import load_cfg_from_registry
 
 from animals.ant.ant_controller import AntController
 from animals.ant.rl.agent import Agent
@@ -15,6 +16,9 @@ if TYPE_CHECKING:
     from rl_games_helper.locomotion_env import LocomotionEnv
 
 from omni.isaac.lab.envs.utils.spaces import sample_space, spec_to_gym_space
+
+TASK_NAME = "Isaac-Ant-Direct-v0"
+RESUME_PATH = "/home/kkona/Documents/research/drone_sim_lab/assets/animals/ant_direct_policy.pth"
 
 
 class RlAntController(AntController):
@@ -54,7 +58,14 @@ class RlAntController(AntController):
         self.max_episode_length = math.ceil(self.cfg.episode_length_s / (self.cfg.sim.dt * self.cfg.decimation))
         self.joint_dof_idx = None
 
-        self.agent:Agent = None
+        from animals.ant.rl.agent import Agent
+
+        agent_cfg = load_cfg_from_registry(TASK_NAME, "rl_games_cfg_entry_point")
+
+        agent_cfg["params"]["config"]["device"] = "cpu"
+        agent_cfg["params"]["config"]["device_name"] = "cpu"
+        # ant_controller = self.ant_controller
+        self.agent = Agent(agent_cfg, self.observation_space, self.action_space, RESUME_PATH)
 
     def post_init(self):
         self.joint_dof_idx, _ = self.robot.find_joints(".*")
