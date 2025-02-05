@@ -84,6 +84,8 @@ class IsaacEnv(gymnasium.Env):
             options: dict[str, Any] | None = None,
     ) -> tuple[ObsType, dict[str, Any]]:
         super().reset(seed=seed, options=options)
+        if seed is not None:
+            self.seed(seed)
         if not self.init_reset:
             self.world.reset(soft=False)
             self.post_init()
@@ -126,3 +128,24 @@ class IsaacEnv(gymnasium.Env):
     def close(self):
         self.sim.clear_all_callbacks()
         self.sim.clear_instance()
+
+
+    @staticmethod
+    def seed(seed: int = -1) -> int:
+        """Set the seed for the environment.
+
+        Args:
+            seed: The seed for random generator. Defaults to -1.
+
+        Returns:
+            The seed used for random generator.
+        """
+        # set seed for replicator
+        try:
+            import omni.replicator.core as rep
+
+            rep.set_global_seed(seed)
+        except ModuleNotFoundError:
+            pass
+        # set seed for torch and other libraries
+        return torch_utils.set_seed(seed)

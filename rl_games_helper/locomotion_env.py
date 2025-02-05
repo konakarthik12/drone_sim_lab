@@ -117,9 +117,6 @@ class LocomotionEnv(IsaacEnv, gym.Env):
     def reset(self, seed: int | None = None, options: dict[str, Any] | None = None) -> tuple[VecEnvObs, dict]:
 
         super().reset(seed, options)
-        # set the seed
-        if seed is not None:
-            self.seed(seed)
 
         # reset state of scene
         self.reset_idx()
@@ -192,25 +189,6 @@ class LocomotionEnv(IsaacEnv, gym.Env):
 
         return self.post_step()
 
-    @staticmethod
-    def seed(seed: int = -1) -> int:
-        """Set the seed for the environment.
-
-        Args:
-            seed: The seed for random generator. Defaults to -1.
-
-        Returns:
-            The seed used for random generator.
-        """
-        # set seed for replicator
-        try:
-            import omni.replicator.core as rep
-
-            rep.set_global_seed(seed)
-        except ModuleNotFoundError:
-            pass
-        # set seed for torch and other libraries
-        return torch_utils.set_seed(seed)
 
     def close(self):
         # clear callbacks and instance
