@@ -38,6 +38,7 @@ class LocomotionEnv(IsaacEnv, gym.Env):
     def reset(self, seed: int | None = None, options: dict[str, Any] | None = None) -> VecEnvObs:
         super().reset(seed, options)
         self.last_obs = self.ant_controller.reset()
+        self.ant_controller.agent.init(self.last_obs)
 
     def pre_step(self):
         if self.current_step % self.cfg.decimation == 0:

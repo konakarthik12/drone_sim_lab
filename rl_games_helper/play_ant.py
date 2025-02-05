@@ -57,9 +57,7 @@ mani_state = ManipulatorState()
 add_gamepad_callback(mani_state.gamepad_callback)
 # reset environment
 env.reset()
-obs = env.last_obs
-# drone_controller.post_init()
-ant_controller.agent.init(obs)
+
 # simulate environment
 # note: We simplified the logic in rl-games player.py (:func:`BasePlayer.run()`) function in an
 #   attempt to have complete control over environment stepping. However, this removes other
@@ -71,12 +69,12 @@ while app.is_running():
     # drone_controller.step(mani_state.as_action())
     count += 1
     if count == 4:
-        assert sha1_array(obs) == "3cbeb8f5a1e73b228b90ffdbca2a073b0557bedd"
+        assert sha1_array(env.last_obs) == "3cbeb8f5a1e73b228b90ffdbca2a073b0557bedd"
     for _ in range(4):
         env.step(None)
     obs = env.last_obs
 
-last_sha = sha1_array(obs)
+last_sha = sha1_array(env.last_obs)
 # close the simulator
 env.close()
 
