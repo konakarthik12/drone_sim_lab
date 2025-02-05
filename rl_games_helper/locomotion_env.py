@@ -33,6 +33,7 @@ class LocomotionEnv(IsaacEnv, gym.Env):
         print("[INFO]: Completed setting up the environment...")
         self.ant_controller = RlAntController(parent_env=self, env_cfg=self.cfg)
         self.current_step = 0
+        self.last_obs = None
 
     def __del__(self):
         """Cleanup for the environment."""
@@ -40,7 +41,7 @@ class LocomotionEnv(IsaacEnv, gym.Env):
 
     def reset(self, seed: int | None = None, options: dict[str, Any] | None = None) -> VecEnvObs:
         super().reset(seed, options)
-        return self.ant_controller.reset()
+        self.last_obs = self.ant_controller.reset()
 
     def pre_step(self, action: torch.Tensor):
         if self.current_step % self.cfg.decimation == 0:
@@ -59,6 +60,8 @@ class LocomotionEnv(IsaacEnv, gym.Env):
         if self.current_step % self.cfg.decimation == 0:
             self.sim.render()
         self.current_step += 1
+        if self.current_step % self.cfg.decimation == 0:
+            self.last_obs = self.ant_controller.post_step()
 
     def step(self, action: torch.Tensor):
 
@@ -67,8 +70,6 @@ class LocomotionEnv(IsaacEnv, gym.Env):
         super().step(action)
         self.post_step()
 
-    def post_decimation(self):
-        return self.ant_controller.post_step()
 
     def close(self):
         # clear callbacks and instance

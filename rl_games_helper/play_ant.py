@@ -55,7 +55,8 @@ agent = Agent(env.ant_controller, agent_cfg, resume_path)
 mani_state = ManipulatorState()
 add_gamepad_callback(mani_state.gamepad_callback)
 # reset environment
-obs = env.reset()
+env.reset()
+obs = env.last_obs
 # drone_controller.post_init()
 agent.init(obs)
 # simulate environment
@@ -73,7 +74,7 @@ while app.is_running():
         assert sha1_array(obs) == "3cbeb8f5a1e73b228b90ffdbca2a073b0557bedd"
     for _ in range(4):
         env.step(actions)
-    obs = env.post_decimation()
+    obs = env.last_obs
 
 last_sha = sha1_array(obs)
 # close the simulator
