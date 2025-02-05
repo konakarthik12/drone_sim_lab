@@ -35,10 +35,6 @@ class LocomotionEnv(IsaacEnv, gym.Env):
         self.current_step = 0
         self.last_obs = None
 
-    def __del__(self):
-        """Cleanup for the environment."""
-        self.close()
-
     def reset(self, seed: int | None = None, options: dict[str, Any] | None = None) -> VecEnvObs:
         super().reset(seed, options)
         self.last_obs = self.ant_controller.reset()
@@ -70,12 +66,6 @@ class LocomotionEnv(IsaacEnv, gym.Env):
         # simulate
         super().step(None)
         self.post_step()
-
-
-    def close(self):
-        # clear callbacks and instance
-        self.sim.clear_all_callbacks()
-        self.sim.clear_instance()
 
     def post_init(self):
         self.ant_controller.post_init()
