@@ -37,32 +37,14 @@ class LocomotionEnv(IsaacEnv, gym.Env):
         self.ant_controller.last_obs = self.ant_controller.reset()
         self.ant_controller.agent.init(self.ant_controller.last_obs)
 
-    def pre_step(self):
-        if self.ant_controller.current_step % self.ant_controller.cfg.decimation == 0:
-            action = self.ant_controller.agent.get_action(self.ant_controller.last_obs)
-            # process actions
-            self.ant_controller.pre_physics_step(action)
-            # set actions into buffers
-        self.ant_controller.apply_action()
 
-    def post_step(self):
-        # render between steps only if the GUI or an RTX sensor needs it
-        # note: we assume the render interval to be the shortest accepted rendering interval.
-        #    If a camera needs rendering at a faster frequency, this will lead to unexpected behavior.
-        # if self._sim_step_counter % round(self.cfg.sim.render_interval) == 0:
-        # update buffers at sim dt
-        self.ant_controller.update()
-
-        self.ant_controller.current_step += 1
-        if self.ant_controller.current_step % self.ant_controller.cfg.decimation == 0:
-            self.ant_controller.last_obs = self.ant_controller.post_step()
 
     def step(self, _):
 
-        self.pre_step()
+        self.ant_controller.pre_step()
         # simulate
         super().step(None)
-        self.post_step()
+        self.ant_controller.post_step()
 
     def post_init(self):
         self.ant_controller.post_init()

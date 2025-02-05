@@ -9,7 +9,6 @@ from omni.isaac.core.utils.torch.rotations import compute_heading_and_up, comput
 from omni.isaac.lab_tasks.utils import load_cfg_from_registry
 
 from animals.ant.ant_controller import AntController
-from animals.ant.rl.agent import Agent
 from rl_games_helper.ant_env_cfg import AntEnvCfg
 
 if TYPE_CHECKING:
@@ -72,7 +71,22 @@ class RlAntController(AntController):
 
     def post_init(self):
         self.joint_dof_idx, _ = self.robot.find_joints(".*")
+    def pre_step(self):
+        if self.current_step % self.cfg.decimation == 0:
+            self.pre_decimation()
+        self.apply_action()
 
+    def post_step(self):
+        # render between steps only if the GUI or an RTX sensor needs it
+        # note: we assume the render interval to be the shortest accepted rendering interval.
+        #    If a camera needs rendering at a faster frequency, this will lead to unexpected behavior.
+        # if self._sim_step_counter % round(self.cfg.sim.render_interval) == 0:
+        # update buffers at sim dt
+        self.update()
+
+        self.current_step += 1
+        if self.current_step % self.cfg.decimation == 0:
+            self.post_decimation()
     def apply_action(self):
         forces = self.action_scale * self.joint_gears * self.actions
         self.robot.set_joint_effort_target(forces, joint_ids=self.joint_dof_idx)
@@ -113,9 +127,6 @@ class RlAntController(AntController):
             self.prev_potentials,
             self.cfg.sim.dt,
         )
-
-    def pre_physics_step(self, actions):
-        self.actions = actions.clone()
 
     def get_observations(self):
         obs = torch.cat(
@@ -183,8 +194,11 @@ class RlAntController(AntController):
 
     def update(self):
         self.robot.update(self.cfg.sim.dt)
+    def pre_decimation(self):
+        action = self.agent.get_action(self.last_obs)
+        self.actions = action.clone()
 
-    def post_step(self):
+    def post_decimation(self):
         # -- update env counters (used for curriculum generation)
         self.episode_length += 1  # step in current episode
 
@@ -194,7 +208,7 @@ class RlAntController(AntController):
         # -- reset env if terminated/timed-out and log the episode information
         if self.reset_buf: self.reset_idx()
 
-        return self.get_observations()
+        self.last_obs = self.get_observations()
 
     def reset(self):
         # reset state of scene
