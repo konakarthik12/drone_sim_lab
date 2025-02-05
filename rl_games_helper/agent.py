@@ -1,13 +1,15 @@
-
+import omni.isaac.lab_tasks  # noqa: F401
 from rl_games.common.player import BasePlayer
 from rl_games.torch_runner import Runner
 
-import omni.isaac.lab_tasks  # noqa: F401
+from rl_games_helper.locomotion_env import LocomotionEnv
+from rl_games_helper.rl_games_raw import register_rl_games_env
+
 
 class Agent:
-
-    def __init__(self, agent_cfg, resume_path, num_envs = 1):
-
+    def __init__(self, env: LocomotionEnv, agent_cfg, resume_path, num_envs=1):
+        # wrap around environment for rl-games
+        register_rl_games_env(env)
         # load previously trained model
         agent_cfg["params"]["load_checkpoint"] = True
         agent_cfg["params"]["load_path"] = resume_path
@@ -25,6 +27,7 @@ class Agent:
 
         self.agent = agent
         agent.reset()
+
     def init(self, obs):
 
         # required: enables the flag for batched observations
