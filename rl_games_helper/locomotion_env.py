@@ -114,7 +114,7 @@ class LocomotionEnv(IsaacEnv, gym.Env):
     Operations.
     """
 
-    def reset(self, seed: int | None = None, options: dict[str, Any] | None = None) -> tuple[VecEnvObs, dict]:
+    def reset(self, seed: int | None = None, options: dict[str, Any] | None = None) ->VecEnvObs:
 
         super().reset(seed, options)
 
@@ -125,7 +125,7 @@ class LocomotionEnv(IsaacEnv, gym.Env):
         self.write_scene_data_to_sim()
 
         # return observations
-        return self._get_observations(), {}
+        return self._get_observations()
 
     def pre_step(self, action):
         action = action.to(self.device)

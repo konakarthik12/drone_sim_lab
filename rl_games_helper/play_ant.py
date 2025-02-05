@@ -9,7 +9,6 @@ from torch import Tensor
 from ant_env_cfg import AntEnvCfg
 import omni.isaac.lab_tasks  # noqa: F401
 from omni.isaac.lab_tasks.utils import load_cfg_from_registry
-from rl_games_raw import RlGamesVecEnvWrapper
 from drone.manipulators import ManipulatorState
 
 
@@ -29,8 +28,7 @@ from drone.drone_controller_qgroundcontrol import DroneControllerQGroundControl
 
 # create drone controller
 # drone_controller = DroneControllerQGroundControl(env)
-# wrap around environment for rl-games
-rl_env = RlGamesVecEnvWrapper(env)
+
 
 def sha1_array(arr: Tensor):
     import hashlib
@@ -41,7 +39,6 @@ def sha1_array(arr: Tensor):
 
     # Convert tensor to bytes
     tensor_bytes = tensor_np.tobytes()
-    print(len(tensor_bytes), list(tensor_bytes))
 
     # Compute SHA-1 hash
     sha1_hash = hashlib.sha1(tensor_bytes).hexdigest()
@@ -49,15 +46,16 @@ def sha1_array(arr: Tensor):
     return sha1_hash
 
 from agent import Agent
-agent_cfg= load_cfg_from_registry(task_name, "rl_games_cfg_entry_point")
+agent_cfg = load_cfg_from_registry(task_name, "rl_games_cfg_entry_point")
+
 agent_cfg["params"]["config"]["device"] = "cpu"
 agent_cfg["params"]["config"]["device_name"] = "cpu"
 set_active_camera("/World/drone/arm/arm_base/Camera")
-agent = Agent(agent_cfg, resume_path)
+agent = Agent(env, agent_cfg, resume_path)
 mani_state = ManipulatorState()
 add_gamepad_callback(mani_state.gamepad_callback)
 # reset environment
-obs = rl_env.reset()
+obs = env.reset()
 # drone_controller.post_init()
 agent.init(obs)
 # simulate environment
@@ -69,13 +67,11 @@ count = 0
 while app.is_running():
 
     actions = agent.get_action(obs)
-    print(obs)
     # drone_controller.step(mani_state.as_action())
-    print(actions)
-    print(sha1_array(obs))
-    print(sha1_array(actions))
     count += 1
-    if count > 3: break
+    if count ==4:
+        assert sha1_array(obs) == "3cbeb8f5a1e73b228b90ffdbca2a073b0557bedd"
+
     # perform environment step
     obs= env.step(actions)
 
@@ -83,7 +79,7 @@ last_sha = sha1_array(obs)
 # close the simulator
 env.close()
 
-print("Last sha", last_sha)
-assert last_sha == "3cbeb8f5a1e73b228b90ffdbca2a073b0557bedd"
+# print("Last sha", last_sha)
+# assert last_sha == "3cbeb8f5a1e73b228b90ffdbca2a073b0557bedd"
 # close sim app
 app.close()
