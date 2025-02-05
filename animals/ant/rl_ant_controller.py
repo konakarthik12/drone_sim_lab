@@ -1,26 +1,20 @@
-from __future__ import annotations
-
 import math
-from typing import TYPE_CHECKING
 
 import omni.isaac.core.utils.torch as torch_utils
 import torch
 from omni.isaac.core.utils.torch.rotations import compute_heading_and_up, compute_rot, quat_conjugate
+from omni.isaac.lab.envs.utils.spaces import sample_space, spec_to_gym_space
 
 from animals.ant.ant_controller import AntController
 from rl_games_helper.ant_env_cfg import AntEnvCfg
-
-if TYPE_CHECKING:
-    from rl_games_helper.locomotion_env import LocomotionEnv
-
-from omni.isaac.lab.envs.utils.spaces import sample_space, spec_to_gym_space
+from sim.isaac_env import IsaacEnv
 
 TASK_NAME = "Isaac-Ant-Direct-v0"
 RESUME_PATH = "/home/kkona/Documents/research/drone_sim_lab/assets/animals/ant_direct_policy.pth"
 
 
 class RlAntController(AntController):
-    def __init__(self, parent_env: LocomotionEnv, env_cfg: AntEnvCfg):
+    def __init__(self, parent_env: IsaacEnv, env_cfg: AntEnvCfg):
         super().__init__(parent_env, env_cfg.robot)
         self.env = parent_env
         self.env_cfg = env_cfg

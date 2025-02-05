@@ -1,21 +1,15 @@
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
-
 from omni.isaac.lab_tasks.utils import load_cfg_from_registry
 
 from animals.ant.rl_ant_controller import RlAntController
 from rl_games_helper.ant_env_cfg import AntEnvCfg
-
-if TYPE_CHECKING:
-    from rl_games_helper.locomotion_env import LocomotionEnv
+from sim.isaac_env import IsaacEnv
 
 TASK_NAME = "Isaac-Ant-Direct-v0"
 RESUME_PATH = "/home/kkona/Documents/research/drone_sim_lab/assets/animals/ant_direct_policy.pth"
 
 
 class PretrainedRlAntController(RlAntController):
-    def __init__(self, parent_env: LocomotionEnv, env_cfg: AntEnvCfg):
+    def __init__(self, parent_env: IsaacEnv, env_cfg: AntEnvCfg = AntEnvCfg()):
         super().__init__(parent_env, env_cfg)
         self.env_cfg = env_cfg
         from animals.ant.rl.agent import Agent
