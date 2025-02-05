@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import math
 from typing import Any
 
 import gymnasium as gym
@@ -30,8 +29,6 @@ class LocomotionEnv(IsaacEnv, gym.Env):
         self.cfg = cfg
 
         self.seed(42)
-        self.cfg.sim.render_interval = 250 / 60
-        assert self.cfg.sim.dt == 1 / 250
         self.sim = self.world
 
         # print useful information
@@ -44,11 +41,6 @@ class LocomotionEnv(IsaacEnv, gym.Env):
 
         assert self.cfg.sim.render_interval >= self.cfg.decimation, "Render interval should not be smaller than decimation, this will cause multiple render calls."
 
-        # initialize data and constants
-        # -- counter for simulation steps
-        self._sim_step_counter = 0
-        # -- counter for curriculum
-        self.common_step_counter = 0
         # -- init buffers
         self.reset_terminated = False
         self.reset_time_outs = False
@@ -61,7 +53,6 @@ class LocomotionEnv(IsaacEnv, gym.Env):
         # print the environment information
         print("[INFO]: Completed setting up the environment...")
         self.ant_controller = RlAntController(parent_env=self, env_cfg=self.cfg)
-        self.ant_controller.episode_length = 0
 
         self.obs_buf = None
         self.reward_buf = None
@@ -100,10 +91,6 @@ class LocomotionEnv(IsaacEnv, gym.Env):
         """The device on which the environment is running."""
         return self.sim.device
 
-    @property
-    def max_episode_length(self):
-        """The maximum episode length in steps adjusted from s."""
-        return math.ceil(self.cfg.episode_length_s / (self.cfg.sim.dt * self.cfg.decimation))
 
     """
     Operations.
@@ -114,7 +101,7 @@ class LocomotionEnv(IsaacEnv, gym.Env):
         super().reset(seed, options)
 
         # reset state of scene
-        self.reset_idx()
+        self.ant_controller.reset_idx()
 
         # update articulation kinematics
         self.ant_controller.robot.write_data_to_sim()
@@ -129,7 +116,6 @@ class LocomotionEnv(IsaacEnv, gym.Env):
         self.ant_controller.pre_physics_step(action)
 
     def pre_sub_step(self):
-        self._sim_step_counter += 1
         # set actions into buffers
         self.ant_controller.apply_action()
         # set actions into simulator
@@ -155,16 +141,14 @@ class LocomotionEnv(IsaacEnv, gym.Env):
         # post-step:
         # -- update env counters (used for curriculum generation)
         self.ant_controller.episode_length += 1  # step in current episode
-        self.common_step_counter += 1  # total step
 
-        self.reset_terminated, self.reset_time_outs = self.ant_controller.get_dones(self.ant_controller.episode_length,
-                                                                                    self.max_episode_length)
+        self.reset_terminated, self.reset_time_outs = self.ant_controller.get_dones()
         self.reset_buf = self.reset_terminated or self.reset_time_outs
         self.reward_buf = self.ant_controller.get_rewards(self.reset_terminated)
 
         # -- reset env if terminated/timed-out and log the episode information
         if self.reset_buf:
-            self.reset_idx()
+            self.ant_controller.reset_idx()
             # update articulation kinematics
             self.ant_controller.robot.write_data_to_sim()
 
@@ -193,7 +177,3 @@ class LocomotionEnv(IsaacEnv, gym.Env):
 
     def post_init(self):
         self.ant_controller.post_init()
-
-    def reset_idx(self):
-        self.ant_controller.episode_length = 0
-        self.ant_controller.reset_idx()

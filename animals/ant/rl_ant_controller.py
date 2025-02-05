@@ -1,4 +1,7 @@
 from __future__ import annotations
+
+import math
+
 import omni.isaac.core.utils.torch as torch_utils
 import torch
 from omni.isaac.core.utils.torch.rotations import compute_heading_and_up, compute_rot, quat_conjugate
@@ -37,6 +40,8 @@ class RlAntController(AntController):
         self.actions = sample_space(self.env.action_space, self.sim.device, batch_size=1, fill_value=0)
 
         self.episode_length = 0
+        self.max_episode_length =  math.ceil(self.cfg.episode_length_s / (self.cfg.sim.dt * self.cfg.decimation))
+
     def post_init(self):
         self._joint_dof_idx, _ = self.robot.find_joints(".*")
 
@@ -123,13 +128,14 @@ class RlAntController(AntController):
         )
         return total_reward
 
-    def get_dones(self, episode_length, max_episode_length):
+    def get_dones(self):
         self._compute_intermediate_values()
-        time_out = episode_length >= max_episode_length - 1
+        time_out = self.episode_length >= self.max_episode_length - 1
         died = self.torso_position[2] < self.cfg.termination_height
         return died, time_out
 
     def reset_idx(self):
+        self.episode_length = 0
         self.robot.reset()
         joint_pos = self.robot.data.default_joint_pos
         joint_vel = self.robot.data.default_joint_vel
