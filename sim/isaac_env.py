@@ -27,14 +27,13 @@ class IsaacEnv(gymnasium.Env):
         from sim.app import get_app
         self.app: SimulationApp = get_app()
 
-
         from omni.isaac.lab.sim import SimulationCfg
         from sim.fake_world import FakeWorld
 
         sim_cfg = SimulationCfg(dt=1 / 250, render_interval=1, device="cpu")
         sim_cfg.use_fabric = False
 
-        self.world:FakeWorld = FakeWorld(sim_cfg)
+        self.world: FakeWorld = FakeWorld(sim_cfg)
 
         self.load_layout(layout_type)
         self.init_reset = False
@@ -46,20 +45,16 @@ class IsaacEnv(gymnasium.Env):
         import omni.isaac.lab.sim as sim_utils
 
         if layout_type == "air":
-            # self.world.scene.add_default_ground_plane()
-
-
             cfg = GroundPlaneCfg(
                 physics_material=sim_utils.RigidBodyMaterialCfg(
-                            friction_combine_mode="average",
-                            restitution_combine_mode="average",
-                            static_friction=1.0,
-                            dynamic_friction=1.0,
-                            restitution=0.0,
-                        ),
+                    friction_combine_mode="average",
+                    restitution_combine_mode="average",
+                    static_friction=1.0,
+                    dynamic_friction=1.0,
+                    restitution=0.0,
+                ),
             )
             cfg.func("/World/defaultGroundPlane", cfg)
-
 
             cfg = DomeLightCfg(
                 color=(0.1, 0.1, 0.1),
@@ -101,6 +96,7 @@ class IsaacEnv(gymnasium.Env):
     ) -> tuple[ObsType, SupportsFloat, bool, bool, dict[str, Any]]:
         self.world.step(render=True)
         return {}, 0.0, False, False, {}
+
     def post_init(self):
         pass
 

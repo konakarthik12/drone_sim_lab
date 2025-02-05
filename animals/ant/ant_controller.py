@@ -1,10 +1,10 @@
 import numpy as np
 from omni.isaac.lab.assets import ArticulationCfg
-from omni.isaac.lab.assets import Articulation
 
 
 class AntController:
     def __init__(self, parent_env, ant_cfg:ArticulationCfg):
+        from omni.isaac.lab.assets import Articulation
 
         self.world = parent_env.world
 
