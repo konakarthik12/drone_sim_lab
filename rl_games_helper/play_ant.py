@@ -64,16 +64,26 @@ agent.init(obs)
 # note: We simplified the logic in rl-games player.py (:func:`BasePlayer.run()`) function in an
 #   attempt to have complete control over environment stepping. However, this removes other
 #   operations such as masking that is used for multi-agent learning by RL-Games.
+count = 0
+
 while app.is_running():
 
     actions = agent.get_action(obs)
+    print(obs)
     # drone_controller.step(mani_state.as_action())
+    print(actions)
+    print(sha1_array(obs))
+    print(sha1_array(actions))
+    count += 1
+    if count > 3: break
     # perform environment step
     obs= env.step(actions)
 
-
+last_sha = sha1_array(obs)
 # close the simulator
-rl_env.close()
+env.close()
 
+print("Last sha", last_sha)
+assert last_sha == "3cbeb8f5a1e73b228b90ffdbca2a073b0557bedd"
 # close sim app
 app.close()
