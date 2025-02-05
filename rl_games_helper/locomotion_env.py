@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 import math
-from typing import Any, ClassVar
+from typing import Any
 
 import gymnasium as gym
-import omni.isaac.core.utils.torch as torch_utils
 import torch
 from omni.isaac.lab.envs.common import VecEnvObs
 from omni.isaac.lab.envs.utils.spaces import spec_to_gym_space
@@ -29,9 +28,6 @@ class LocomotionEnv(IsaacEnv, gym.Env):
 
         # store inputs to class
         self.cfg = cfg
-
-        # initialize internal variables
-        self._is_closed = False
 
         self.seed(42)
         self.cfg.sim.render_interval = 250 / 60
@@ -60,11 +56,15 @@ class LocomotionEnv(IsaacEnv, gym.Env):
         self.reset_buf = False
 
         # setup the action and observation spaces for Gym
-        self._configure_gym_env_spaces()
+        self.observation_space = spec_to_gym_space(self.cfg.observation_space)
+        self.action_space = spec_to_gym_space(self.cfg.action_space)
 
         # print the environment information
         print("[INFO]: Completed setting up the environment...")
         self.ant_controller = RlAntController(parent_env=self, env_cfg=self.cfg)
+
+        self.obs_buf = None
+        self.reward_buf = None
 
     def __del__(self):
         """Cleanup for the environment."""
@@ -114,7 +114,7 @@ class LocomotionEnv(IsaacEnv, gym.Env):
     Operations.
     """
 
-    def reset(self, seed: int | None = None, options: dict[str, Any] | None = None) ->VecEnvObs:
+    def reset(self, seed: int | None = None, options: dict[str, Any] | None = None) -> VecEnvObs:
 
         super().reset(seed, options)
 
@@ -122,22 +122,23 @@ class LocomotionEnv(IsaacEnv, gym.Env):
         self.reset_idx()
 
         # update articulation kinematics
-        self.write_scene_data_to_sim()
+        self.ant_controller.robot.write_data_to_sim()
 
         # return observations
-        return self._get_observations()
+        return self.ant_controller.get_observations()
 
     def pre_step(self, action):
         action = action.to(self.device)
 
         # process actions
-        self._pre_physics_step(action)
+        self.ant_controller.pre_physics_step(action)
+
     def pre_sub_step(self):
         self._sim_step_counter += 1
         # set actions into buffers
-        self._apply_action()
+        self.ant_controller.apply_action()
         # set actions into simulator
-        self.write_scene_data_to_sim()
+        self.ant_controller.robot.write_data_to_sim()
 
     def sub_step(self):
 
@@ -147,10 +148,11 @@ class LocomotionEnv(IsaacEnv, gym.Env):
         # note: we assume the render interval to be the shortest accepted rendering interval.
         #    If a camera needs rendering at a faster frequency, this will lead to unexpected behavior.
         # if self._sim_step_counter % round(self.cfg.sim.render_interval) == 0:
+
     def post_sub_step(self):
 
         # update buffers at sim dt
-        self.update_scene(dt=self.physics_dt)
+        self.ant_controller.robot.update(self.physics_dt)
 
     def post_step(self):
         self.sim.render()
@@ -160,18 +162,19 @@ class LocomotionEnv(IsaacEnv, gym.Env):
         self.episode_length += 1  # step in current episode
         self.common_step_counter += 1  # total step
 
-        self.reset_terminated, self.reset_time_outs = self._get_dones()
+        self.reset_terminated, self.reset_time_outs = self.ant_controller.get_dones(self.episode_length,
+                                                                                    self.max_episode_length)
         self.reset_buf = self.reset_terminated or self.reset_time_outs
-        self.reward_buf = self._get_rewards()
+        self.reward_buf = self.ant_controller.get_rewards(self.reset_terminated)
 
         # -- reset env if terminated/timed-out and log the episode information
         if self.reset_buf:
             self.reset_idx()
             # update articulation kinematics
-            self.write_scene_data_to_sim()
+            self.ant_controller.robot.write_data_to_sim()
 
         # update observations
-        self.obs_buf = self._get_observations()
+        self.obs_buf = self.ant_controller.get_observations()
 
         # return observations, rewards, resets and extras
         return self.obs_buf
@@ -186,53 +189,16 @@ class LocomotionEnv(IsaacEnv, gym.Env):
             self.sub_step()
             self.post_sub_step()
 
-
         return self.post_step()
-
 
     def close(self):
         # clear callbacks and instance
         self.sim.clear_all_callbacks()
         self.sim.clear_instance()
 
-
-    """
-    Helper functions.
-    """
-
-    def _configure_gym_env_spaces(self):
-        """Configure the action and observation spaces for the Gym environment."""
-
-        self.observation_space = spec_to_gym_space(self.cfg.observation_space)
-        self.action_space = spec_to_gym_space(self.cfg.action_space)
-
-
-
     def post_init(self):
         self.ant_controller.post_init()
-
-    def _pre_physics_step(self, actions: torch.Tensor):
-        self.ant_controller.pre_physics_step(actions)
-
-    def _apply_action(self):
-        self.ant_controller.apply_action()
-
-    def _get_observations(self) -> dict:
-        return self.ant_controller.get_observations()
-
-    def _get_rewards(self) -> torch.Tensor:
-        return self.ant_controller.get_rewards(self.reset_terminated)
-
-    def _get_dones(self) -> tuple[bool, bool]:
-        return self.ant_controller.get_dones(self.episode_length, self.max_episode_length)
 
     def reset_idx(self):
         self.episode_length = 0
         self.ant_controller.reset_idx()
-
-    def write_scene_data_to_sim(self):
-        self.ant_controller.robot.write_data_to_sim()
-
-
-    def update_scene(self, dt: float):
-        self.ant_controller.robot.update(dt)
