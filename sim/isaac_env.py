@@ -1,10 +1,10 @@
 from typing import Any, SupportsFloat
 
 import gymnasium
-from gymnasium.core import ObsType, ActType, RenderFrame
+from gymnasium.core import ObsType, ActType
 from omni.isaac.lab.sim import GroundPlaneCfg
 from omni.isaac.lab.sim import DomeLightCfg
-from utils import enable_gpu_dynamics
+import omni.isaac.core.utils.torch as torch_utils
 
 
 class IsaacEnv(gymnasium.Env):
@@ -23,7 +23,6 @@ class IsaacEnv(gymnasium.Env):
         #     "anti_aliasing": 0,
         #     "display_options": DISP_FPS | DISP_RESOLUTION | DISP_MESH | DISP_DEV_MEM | DISP_HOST_MEM,
         # })
-        from omni.isaac.lab.app import AppLauncher
         from omni.isaac.kit import SimulationApp
         from sim.app import get_app
         self.app: SimulationApp = get_app()
