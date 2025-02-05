@@ -34,7 +34,9 @@ class RlAntController(AntController):
         self.basis_vec1 = self.up_vec.clone()
 
         # instantiate actions (needed for tasks for which the observations computation is dependent on the actions)
-        self.actions = sample_space(self.env.single_action_space, self.sim.device, batch_size=1, fill_value=0)
+        self.actions = sample_space(self.env.action_space, self.sim.device, batch_size=1, fill_value=0)
+
+        self.episode_length = 0
     def post_init(self):
         self._joint_dof_idx, _ = self.robot.find_joints(".*")
 

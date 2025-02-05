@@ -20,14 +20,12 @@ def register_rl_games_env(env: LocomotionEnv):
             self._clip_obs = float('inf')
             self._clip_actions = 1.0
             self._sim_device = "cpu"
-            policy_obs_space = env.single_observation_space["policy"]
 
-            self.observation_space = gym.spaces.Box(-self._clip_obs, self._clip_obs, policy_obs_space.shape)
+            self.observation_space = gym.spaces.Box(-self._clip_obs, self._clip_obs, env.observation_space.shape)
             env_configurations.register("rlgpu",
                                         {"vecenv_type": "IsaacRlgWrapper", "env_creator": lambda **kwargs: self})
-            action_space = env.single_action_space
 
-            self.action_space = gym.spaces.Box(-self._clip_actions, self._clip_actions, action_space.shape)
+            self.action_space = gym.spaces.Box(-self._clip_actions, self._clip_actions, env.action_space.shape)
 
         env_configurations.register("rlgpu", {"vecenv_type": "IsaacRlgWrapper",
                                               "env_creator": lambda **kwargs: RlGamesVecEnvWrapper()})

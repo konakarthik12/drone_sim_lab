@@ -203,17 +203,8 @@ class LocomotionEnv(IsaacEnv, gym.Env):
     def _configure_gym_env_spaces(self):
         """Configure the action and observation spaces for the Gym environment."""
 
-        # set up spaces
-        self.single_observation_space = gym.spaces.Dict()
-        self.single_observation_space["policy"] = spec_to_gym_space(self.cfg.observation_space)
-        self.single_action_space = spec_to_gym_space(self.cfg.action_space)
-
-        # batch the spaces for vectorized environments
-        self.observation_space = self.single_observation_space["policy"]
-        self.action_space = self.single_action_space
-
-
-
+        self.observation_space = spec_to_gym_space(self.cfg.observation_space)
+        self.action_space = spec_to_gym_space(self.cfg.action_space)
 
 
 
