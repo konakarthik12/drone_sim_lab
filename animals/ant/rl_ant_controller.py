@@ -6,7 +6,7 @@ from omni.isaac.core.utils.torch.rotations import compute_heading_and_up, comput
 from omni.isaac.lab.envs.utils.spaces import sample_space, spec_to_gym_space
 
 from animals.ant.ant_controller import AntController
-from rl_games_helper.ant_env_cfg import AntEnvCfg
+from animals.ant.ant_env_cfg import AntEnvCfg
 from sim.isaac_env import IsaacEnv
 
 TASK_NAME = "Isaac-Ant-Direct-v0"

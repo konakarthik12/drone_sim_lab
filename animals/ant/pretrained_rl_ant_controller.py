@@ -1,7 +1,7 @@
 from omni.isaac.lab_tasks.utils import load_cfg_from_registry
 
 from animals.ant.rl_ant_controller import RlAntController
-from rl_games_helper.ant_env_cfg import AntEnvCfg
+from animals.ant.ant_env_cfg import AntEnvCfg
 from sim.isaac_env import IsaacEnv
 
 TASK_NAME = "Isaac-Ant-Direct-v0"
@@ -12,7 +12,7 @@ class PretrainedRlAntController(RlAntController):
     def __init__(self, parent_env: IsaacEnv, env_cfg: AntEnvCfg = AntEnvCfg()):
         super().__init__(parent_env, env_cfg)
         self.env_cfg = env_cfg
-        from animals.ant.rl.agent import Agent
+        from animals.ant.agent import Agent
 
         agent_cfg = load_cfg_from_registry(TASK_NAME, "rl_games_cfg_entry_point")
 
