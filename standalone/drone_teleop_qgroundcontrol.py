@@ -28,6 +28,7 @@ while not exit_watcher.pressed:
     env.step(mani_action)
     if count % 4 == 0:
         env.sim.render()
+    count += 1
     drone_action = np.array(env.drone_controller.backend.input_reference())
     commands.append(np.append(drone_action, mani_action))
 

@@ -16,9 +16,15 @@ camera = Camera(camera_path, resolution=(1280, 720))
 env.reset()
 camera.initialize()
 frames = []
+count = 0
 for action in commands:
     env.step(action)
-    frames.append(camera.get_rgb())
+    if count % 4 == 0:
+        env.sim.render()
+        frames.append(camera.get_rgb())
+    count += 1
+
 
 frames_path = "episode_frames.pkl"
 save_pickle(frames_path, frames)
+print(f"Frames saved to {frames_path}")
