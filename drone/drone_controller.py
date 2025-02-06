@@ -70,7 +70,7 @@ class DroneController(Controller):
         pass
 
     # action space (7,): [motor1, ..., motor4, joint1_pos, joint2_pos, gripper_close]
-    def step(self, action):
+    def post_step(self, action):
         self.backend.last_action = action[:4]
         self.manipulators.step(action[4:])
         return

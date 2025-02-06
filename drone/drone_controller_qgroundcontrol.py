@@ -17,8 +17,8 @@ class DroneControllerQGroundControl(DroneController):
         })
         return PX4MavlinkBackend(mavlink_config)
 
-    def step(self, action):
-        self.manipulators.step(action)
+    def post_step(self, action):
+        self.manipulators.post_step(action)
 
     def close(self):
         self.backend.stop()

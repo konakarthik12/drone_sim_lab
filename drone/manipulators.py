@@ -82,7 +82,7 @@ class Manipulators(Controller):
         self.arms = Arms(articulation)
         self.grippers = Grippers(articulation)
 
-    def step(self, action):
+    def post_step(self, action):
         self.arms.move_arms(action[:2])
         self.grippers.move_grippers(action[2])
 

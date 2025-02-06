@@ -19,7 +19,7 @@ class DroneTeleOpEnv(IsaacEnv):
     def step(self, action):
         self.ant_controller.pre_step()
         super().step(action)
-        self.drone_controller.step(action)
+        self.drone_controller.post_step(action)
         self.ant_controller.post_step()
         return {}, 0.0, False, False, {}
 

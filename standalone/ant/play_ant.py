@@ -24,7 +24,7 @@ env.reset()
 drone_controller.post_init()
 while app.is_running():
 
-    drone_controller.step(mani_state.as_action())
+    drone_controller.post_step(mani_state.as_action())
     for _ in range(4):
         env.step(None)
 
