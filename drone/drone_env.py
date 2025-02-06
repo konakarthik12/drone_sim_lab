@@ -4,6 +4,7 @@ from gymnasium.core import ObsType
 
 from animals.ant.ant_controller import AntController
 from animals.ant.ant_usd_cfg import get_ant_cfg
+from animals.ant.pretrained_rl_ant_controller import PretrainedRlAntController
 from animals.crab.zero_crab_controller import ZeroCrabController
 from drone.drone_controller import DroneController
 from drone.drone_controller_qgroundcontrol import DroneControllerQGroundControl
@@ -13,8 +14,8 @@ from sim.isaac_env import IsaacEnv
 class DroneEnv(IsaacEnv):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.ant_controller = AntController(parent_env=self, ant_cfg=get_ant_cfg((6.0, 0.0, 0.0), [0.045] * 3))
         self.drone_controller = DroneController(parent_env=self)
+        self.ant_controller = PretrainedRlAntController(parent_env=self)
 
     def step(self, action):
         super().step(action)

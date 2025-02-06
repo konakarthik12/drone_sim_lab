@@ -2,7 +2,6 @@ from typing import Any
 
 from gymnasium.core import ObsType
 
-from animals.ant.ant_controller import AntController
 from animals.ant.ant_usd_cfg import get_ant_cfg
 from animals.ant.pretrained_rl_ant_controller import PretrainedRlAntController
 from drone.drone_controller_qgroundcontrol import DroneControllerQGroundControl
@@ -13,7 +12,7 @@ class DroneTeleOpEnv(IsaacEnv):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.drone_controller = DroneControllerQGroundControl(parent_env=self)
-        self.ant_controller = AntController(parent_env=self, ant_cfg=get_ant_cfg((6.0, 0.0, 0.5*0.045), [0.045] * 3))
+        self.ant_controller = PretrainedRlAntController(parent_env=self)
 
     # actual left and right joystick values are handled by the QGroundControl
     # we only handle manipulator control here
