@@ -6,6 +6,7 @@ from scipy.spatial.transform import Rotation
 
 from drone.drone_utils.pegasus_backend import PegasusBackend
 from drone.manipulators import Manipulators
+from sim.controller import Controller
 
 
 class DirectBackend(PegasusBackend):
@@ -30,7 +31,7 @@ def force_kill_px4():
             proc.kill()
 
 
-class DroneController:
+class DroneController(Controller):
     backend: DirectBackend
 
     def __init__(self, parent_env):
@@ -60,7 +61,7 @@ class DroneController:
             config=config_multirotor,
         )
 
-        self.manipulators = Manipulators(self.world)
+        self.manipulators = Manipulators(self.world, self.stage_prefix)
 
     def get_backend(self):
         return DirectBackend()
@@ -75,11 +76,7 @@ class DroneController:
         return
 
     def post_init(self):
-        from sim.dc_interface import dci
-        drone_articulation = dci.get_articulation(self.stage_prefix)
-
-        self.manipulators.post_init(drone_articulation)
-        return
+        self.manipulators.post_init()
 
     def close(self):
         self.backend.stop()

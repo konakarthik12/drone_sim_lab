@@ -1,8 +1,10 @@
 import math
 
+import carb.input
 import numpy as np
 from omni.isaac.lab.assets import Articulation
-import carb.input
+
+from sim.controller import Controller
 
 JOINT_NAMES = ["grip_1_joint", "grip_2_joint", "grip_3_joint"]
 
@@ -67,14 +69,15 @@ class Arms:
         self.move_arms([-0.3, -1.3])
 
 
-class Manipulators:
-    def __init__(self, world):
+class Manipulators(Controller):
+    def __init__(self, world, articulation_path):
         self.world = world
+        self.articulation_path = articulation_path
         self.arms = None
         self.grippers = None
 
-    def post_init(self, articulation):
-        articulation = articulation
+    def post_init(self):
+        articulation = dci.get_articulation(self.articulation_path)
         dci.wake_up_articulation(articulation)
         self.arms = Arms(articulation)
         self.grippers = Grippers(articulation)
@@ -85,7 +88,7 @@ class Manipulators:
 
 
 class ManipulatorState:
-    def __init__(self, joint1_pos=0,joint2_pos = 0, gripper=0.0):
+    def __init__(self, joint1_pos=0, joint2_pos=0, gripper=0.0):
         self.joint1_pos = joint1_pos
         self.joint2_pos = joint2_pos
         self.gripper = gripper
