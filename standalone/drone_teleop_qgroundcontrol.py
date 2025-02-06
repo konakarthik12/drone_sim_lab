@@ -22,9 +22,12 @@ commands = []
 
 set_active_camera("/World/drone/arm/arm_base/Camera")
 env.reset()
+count = 0
 while not exit_watcher.pressed:
     mani_action = state.as_action()
     env.step(mani_action)
+    if count % 4 == 0:
+        env.sim.render()
     drone_action = np.array(env.drone_controller.backend.input_reference())
     commands.append(np.append(drone_action, mani_action))
 
