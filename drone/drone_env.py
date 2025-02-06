@@ -2,12 +2,8 @@ from typing import Any
 
 from gymnasium.core import ObsType
 
-from animals.ant.ant_controller import AntController
-from animals.ant.ant_usd_cfg import get_ant_cfg
 from animals.ant.pretrained_rl_ant_controller import PretrainedRlAntController
-from animals.crab.zero_crab_controller import ZeroCrabController
 from drone.drone_controller import DroneController
-from drone.drone_controller_qgroundcontrol import DroneControllerQGroundControl
 from sim.isaac_env import IsaacEnv
 
 
@@ -18,12 +14,15 @@ class DroneEnv(IsaacEnv):
         self.ant_controller = PretrainedRlAntController(parent_env=self)
 
     def step(self, action):
+        self.ant_controller.pre_step()
         super().step(action)
         self.drone_controller.step(action)
+        self.ant_controller.post_step()
         return {}, 0.0, False, False, {}
 
     def post_init(self):
         self.drone_controller.post_init()
+        self.ant_controller.post_init()
 
     def reset(
             self,
@@ -33,6 +32,7 @@ class DroneEnv(IsaacEnv):
     ) -> tuple[ObsType, dict[str, Any]]:
         super().reset(seed=seed, options=options)
         self.drone_controller.reset()
+        self.ant_controller.reset()
         return {}, {}
 
     def close(self):

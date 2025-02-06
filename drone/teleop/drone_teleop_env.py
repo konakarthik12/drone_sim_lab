@@ -2,7 +2,6 @@ from typing import Any
 
 from gymnasium.core import ObsType
 
-from animals.ant.ant_usd_cfg import get_ant_cfg
 from animals.ant.pretrained_rl_ant_controller import PretrainedRlAntController
 from drone.drone_controller_qgroundcontrol import DroneControllerQGroundControl
 from sim.isaac_env import IsaacEnv
