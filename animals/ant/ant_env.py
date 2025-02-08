@@ -4,7 +4,7 @@ from sim.isaac_env import IsaacEnv
 
 class AntEnv(IsaacEnv):
     def __init__(self, cfg: AntEnvCfg):
-        super().__init__(layout_type="grid")
+        super().__init__(layout="grid")
 
         self.sim = self.world
         self.ant_controller = PretrainedRlAntController(parent_env=self, env_cfg=cfg)

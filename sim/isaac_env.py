@@ -8,7 +8,7 @@ import omni.isaac.core.utils.torch as torch_utils
 
 
 class IsaacEnv(gymnasium.Env):
-    def __init__(self, layout_type="air"):
+    def __init__(self, layout="air"):
         from omni.isaac.kit import SimulationApp
         from sim.app import get_app
         self.app: SimulationApp = get_app()
@@ -20,18 +20,18 @@ class IsaacEnv(gymnasium.Env):
         self.sim_cfg.use_fabric = False
         self.world: FakeWorld = FakeWorld(self.sim_cfg)
         self.sim = self.world
-        self.load_layout(layout_type)
+        self.load_layout(layout)
         self.init_reset = False
         self.seed(42)
 
     def get_world_settings(self):
         return {}
 
-    def load_layout(self, layout_type):
+    def load_layout(self, layout):
         # from pegasus_custom.params import ENV_ASSETS
         import omni.isaac.lab.sim as sim_utils
 
-        if layout_type == "air":
+        if layout == "air":
             cfg = GroundPlaneCfg(
                 physics_material=sim_utils.RigidBodyMaterialCfg(
                     friction_combine_mode="average",
@@ -52,18 +52,18 @@ class IsaacEnv(gymnasium.Env):
             # Dome light named specifically to avoid conflicts
             cfg.func(prim_path="/World/defaultDomeLight", cfg=cfg, translation=(0.0, 0.0, 10.0))
 
-        elif layout_type == "water":
+        elif layout == "water":
             raise NotImplementedError("Water layout not implemented yet")
             # self.pg.load_environment(ENV_ASSETS + "/fluid_test_2.usd")
             # cfg = sim_utils.UsdFileCfg(usd_path=f"{ENV_ASSETS}/fluid_test_2.usd")
             # cfg.func("/World/layout", cfg)
             # enable_gpu_dynamics()
-        elif layout_type == "grid":
+        elif layout == "grid":
             cfg = sim_utils.UsdFileCfg(
                 usd_path=f"/home/kkona/Documents/research/drone_sim_lab/assets/worlds/grid_with_stand.usd")
             cfg.func("/World/layout", cfg)
         else:
-            raise ValueError(f"Unknown layout type {layout_type}")
+            raise ValueError(f"Unknown layout type {layout}")
 
     def reset(
             self,

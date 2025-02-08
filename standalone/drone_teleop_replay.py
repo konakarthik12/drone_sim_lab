@@ -7,7 +7,7 @@ from pandas import read_pickle
 from drone.drone_env import DroneEnv
 from omni.isaac.sensor import Camera
 
-env = DroneEnv(layout_type="grid")
+env = DroneEnv(layout="grid")
 
 commands = read_pickle("episode_actions.pkl")
 camera_path = "/World/drone/arm/arm_base/Camera"

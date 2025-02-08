@@ -8,7 +8,7 @@ from carb.input import GamepadInput
 from drone.teleop.drone_teleop_env import DroneTeleOpEnv
 from utils import add_gamepad_callback, set_active_camera, GamepadButtonPressWatcher, save_pickle
 
-env = DroneTeleOpEnv(layout_type="grid")
+env = DroneTeleOpEnv(layout="grid")
 
 from drone.manipulators import ManipulatorState
 
