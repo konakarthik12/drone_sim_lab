@@ -6,6 +6,7 @@ from omni.isaac.lab.sim import GroundPlaneCfg
 from omni.isaac.lab.sim import DomeLightCfg
 import omni.isaac.core.utils.torch as torch_utils
 
+SIM_DT = 1 / 250
 
 class IsaacEnv(gymnasium.Env):
     def __init__(self, layout="air"):
@@ -16,13 +17,14 @@ class IsaacEnv(gymnasium.Env):
         from omni.isaac.lab.sim import SimulationCfg
         from sim.fake_world import FakeWorld
 
-        self.sim_cfg = SimulationCfg(dt=1 / 250, render_interval=1, device="cpu")
+        self.sim_cfg = SimulationCfg(dt=SIM_DT, render_interval=1, device="cpu")
         self.sim_cfg.use_fabric = False
         self.world: FakeWorld = FakeWorld(self.sim_cfg)
         self.sim = self.world
         self.load_layout(layout)
         self.init_reset = False
         self.seed(42)
+        self.dt = SIM_DT
 
     def get_world_settings(self):
         return {}
