@@ -6,6 +6,8 @@ from omni.isaac.lab.assets import ArticulationCfg
 
 
 def get_ant_cfg(init_pos=(0.0, 0.0, 0.5), scale=None):
+    if scale is not None and type(scale) is float:
+        scale = [scale] * 3
     return ArticulationCfg(
         prim_path="/World/ant",
         spawn=sim_utils.UsdFileCfg(
