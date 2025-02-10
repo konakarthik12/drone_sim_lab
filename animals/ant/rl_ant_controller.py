@@ -5,15 +5,15 @@ import torch
 from omni.isaac.core.utils.torch.rotations import compute_heading_and_up, compute_rot, quat_conjugate
 from omni.isaac.lab.envs.utils.spaces import sample_space, spec_to_gym_space
 
-from animals.ant.ant_controller import AntController
 from animals.ant.ant_env_cfg import AntEnvCfg
+from animals.art_controller import ArtController
 from sim.isaac_env import IsaacEnv
 
 TASK_NAME = "Isaac-Ant-Direct-v0"
 RESUME_PATH = "/home/kkona/Documents/research/drone_sim_lab/assets/animals/ant_direct_policy.pth"
 
 
-class RlAntController(AntController):
+class RlAntController(ArtController):
     def __init__(self, parent_env: IsaacEnv, env_cfg: AntEnvCfg):
         super().__init__(parent_env, env_cfg.robot)
         self.env = parent_env

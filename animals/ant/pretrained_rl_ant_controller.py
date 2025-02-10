@@ -1,7 +1,7 @@
 from omni.isaac.lab_tasks.utils import load_cfg_from_registry
 
-from animals.ant.rl_ant_controller import RlAntController
 from animals.ant.ant_env_cfg import AntEnvCfg
+from animals.ant.rl_ant_controller import RlAntController
 from sim.isaac_env import IsaacEnv
 
 TASK_NAME = "Isaac-Ant-Direct-v0"
@@ -31,7 +31,7 @@ class PretrainedRlAntController(RlAntController):
         self.apply_action()
 
     def post_step(self):
-        self.robot.update(self.env_cfg.sim.dt)
+        super().post_step()
 
         self.current_step += 1
         if self.current_step % self.env_cfg.decimation == 0:
