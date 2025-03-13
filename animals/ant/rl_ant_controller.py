@@ -37,7 +37,9 @@ class RlAntController(ArtController):
         self.targets = torch.tensor([1000, 0, 0], dtype=torch.float32, device=self.sim.device)
         self.start_rotation = torch.tensor([1, 0, 0, 0], device=self.sim.device, dtype=torch.float32)
         self.up_vec = torch.tensor([0, 0, 1], dtype=torch.float32, device=self.sim.device)
-        self.heading_vec = torch.tensor([1, 0, 0], dtype=torch.float32, device=self.sim.device)
+        # heading_mark = [1, 0, 0]
+        heading_mark = [0, 1, 0]
+        self.heading_vec = torch.tensor(heading_mark, dtype=torch.float32, device=self.sim.device)
         self.inv_start_rot = quat_conjugate(self.start_rotation)
         self.basis_vec0 = self.heading_vec.clone()
         self.basis_vec1 = self.up_vec.clone()
@@ -199,15 +201,17 @@ def compute_rewards(
     # reward for duration of staying alive
     alive_reward = torch.ones_like(potentials) * alive_reward_scale
     progress_reward = potentials - prev_potentials
+    progress_reward_scale = 2
 
+    dof_at_limit_cost_scale = 0.05
     total_reward = (
-            progress_reward
+            progress_reward_scale * progress_reward
             + alive_reward
             + up_reward
             + heading_reward
             - actions_cost_scale * actions_cost
             - energy_cost_scale * electricity_cost
-            - dof_at_limit_cost
+            - dof_at_limit_cost_scale * dof_at_limit_cost
     )
     # adjust reward for fallen agents
     total_reward = torch.where(reset_terminated, torch.ones_like(total_reward) * death_cost, total_reward)
