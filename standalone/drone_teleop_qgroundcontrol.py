@@ -15,7 +15,7 @@ from drone.manipulators import ManipulatorState
 state = ManipulatorState()
 add_gamepad_callback(state.gamepad_callback)
 
-exit_watcher = GamepadButtonPressWatcher(GamepadInput.MENU1)
+exit_watcher = GamepadButtonPressWatcher(GamepadInput.MENU2)
 add_gamepad_callback(exit_watcher.gamepad_callback)
 
 commands = []

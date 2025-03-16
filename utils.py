@@ -39,10 +39,19 @@ class GamepadButtonPressWatcher:
             return False
         return True
 
+def get_active_camera() -> str:
+    from omni.kit.viewport.utility import get_active_viewport
+    from omni.kit.viewport.utility.legacy_viewport_api import LegacyViewportAPI
+    # noinspection PyTypeChecker
+    viewport: LegacyViewportAPI = get_active_viewport()
+    # noinspection PyTypeChecker
+    return viewport.get_active_camera().pathString
 
 def set_active_camera(camera_path):
     from omni.kit.viewport.utility import get_active_viewport
-    viewport = get_active_viewport()
+    from omni.kit.viewport.utility.legacy_viewport_api import LegacyViewportAPI
+    # noinspection PyTypeChecker
+    viewport:LegacyViewportAPI = get_active_viewport()
     viewport.set_active_camera(camera_path)
 
 
