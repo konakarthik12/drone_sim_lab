@@ -49,8 +49,9 @@ class DroneController(Controller):
         self.backend = self.get_backend()
         config_multirotor.backends = [self.backend] if self.backend else []
         self.stage_prefix = "/World/drone"
-        init_pos = np.array([0.0, 0.0, 1.02])
-        init_rot = np.array([0.0, 0.0, 0])
+
+        init_pos = np.array([-0.01035575, -0.01212927,  1.00196555])
+        init_rot = np.array([-0.608, -0.313, 9.425])
         # noinspection PyTypeChecker
         self.drone = Multirotor(
             self.stage_prefix,
