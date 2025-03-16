@@ -1,8 +1,8 @@
+from omni.isaac.lab_tasks.direct.crab.crab_env import CrabEnvCfg
 from omni.isaac.lab_tasks.utils import load_cfg_from_registry
 
-from animals.ant.ant_env_cfg import AntEnvCfg
-from animals.crab.crab_env_cfg import CrabEnvCfg
 from animals.ant.rl_ant_controller import RlAntController
+from animals.crab.crab_usd_cfg import get_crab_cfg
 from sim.isaac_env import IsaacEnv
 
 # TASK_NAME = "Isaac-Ant-Direct-v0"
@@ -10,9 +10,13 @@ from sim.isaac_env import IsaacEnv
 TASK_NAME = "Isaac-Crab-Direct-v0"
 RESUME_PATH = "/home/kkona/Documents/research/drone_sim_lab/assets/animals/crab/crab_direct.pth"
 
-
+def default_rl_env():
+    cfg = CrabEnvCfg()
+    scale = 6
+    cfg.robot = get_crab_cfg(init_pos=(6.0, 0.0, 0.024 * scale), scale=[0.0012 * scale] * 3)
+    return cfg
 class PretrainedRlAntController(RlAntController):
-    def __init__(self, parent_env: IsaacEnv, env_cfg=CrabEnvCfg()):
+    def __init__(self, parent_env: IsaacEnv, env_cfg=default_rl_env()):
         super().__init__(parent_env, env_cfg)
         self.env_cfg = env_cfg
         from animals.ant.agent import Agent
