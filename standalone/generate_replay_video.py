@@ -11,7 +11,7 @@ images = images[1:]
 height, width, _ = images[0].shape  # Get dimensions from an image
 
 # Define the video writer
-output_path = "output_video.mp4"
+output_path = "fpv_video.mp4"
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Codec for MP4 format
 fps = 30
 video_writer = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
