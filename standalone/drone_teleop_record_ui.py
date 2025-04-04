@@ -1,5 +1,5 @@
 from sim.app import init_app
-from utils import save_pickle, get_active_camera
+from utils import save_pickle, get_active_camera, enable_gamepad_control
 
 init_app()
 
@@ -9,11 +9,11 @@ from omni.isaac.sensor import Camera
 
 env = DroneEnv(layout="grid")
 
-commands = read_pickle("episode_actions.pkl")
+commands = read_pickle("trajectories/episode_actions.pkl")
 
 camera_path = get_active_camera()
 camera = Camera(camera_path, resolution=(1280, 720))
-
+enable_gamepad_control()
 
 env.reset()
 camera.initialize()

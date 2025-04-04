@@ -28,6 +28,11 @@ def add_gamepad_callback(callback, gamepad_id=0):
     return gamepad_sub
 
 
+def enable_gamepad_control():
+    import carb.settings
+    carb_settings_iface = carb.settings.get_settings()
+    carb_settings_iface.set_bool("/persistent/app/omniverse/gamepadCameraControl", True)
+
 class GamepadButtonPressWatcher:
     def __init__(self, button):
         self.pressed = False
