@@ -1,3 +1,4 @@
+from omni.isaac.lab.sim import UsdFileCfg
 from omni.isaac.lab_tasks.direct.crab.crab_env import CrabEnvCfg
 from omni.isaac.lab_tasks.utils import load_cfg_from_registry
 
@@ -10,11 +11,13 @@ from sim.isaac_env import IsaacEnv
 TASK_NAME = "Isaac-Crab-Direct-v0"
 RESUME_PATH = "/home/kkona/Documents/research/drone_sim_lab/assets/animals/crab/crab_direct.pth"
 
+
 def default_rl_env():
     cfg = CrabEnvCfg()
-    scale = 6
-    cfg.robot = get_crab_cfg(init_pos=(6.0, 0.0, 0.024 * scale), scale=[0.0012 * scale] * 3)
+    cfg.robot = get_crab_cfg(init_pos=(6.0, 0.0, None))  # Keep the z-position same as training environment
     return cfg
+
+
 class PretrainedRlAntController(RlAntController):
     def __init__(self, parent_env: IsaacEnv, env_cfg=default_rl_env()):
         super().__init__(parent_env, env_cfg)

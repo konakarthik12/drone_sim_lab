@@ -35,6 +35,7 @@ class RlAntController(ArtController):
         self.potentials = torch.zeros(1, dtype=torch.float32, device=self.sim.device)
         self.prev_potentials = torch.zeros_like(self.potentials)
         self.targets = torch.tensor([1000, 0, 0], dtype=torch.float32, device=self.sim.device)
+        assert self.targets.shape == (3,)
         self.start_rotation = torch.tensor([1, 0, 0, 0], device=self.sim.device, dtype=torch.float32)
         self.up_vec = torch.tensor([0, 0, 1], dtype=torch.float32, device=self.sim.device)
         # heading_mark = [1, 0, 0]
@@ -52,6 +53,11 @@ class RlAntController(ArtController):
             self.env_cfg.episode_length_s / (self.env_cfg.sim.dt * self.env_cfg.decimation))
         self.joint_dof_idx = None
         self.last_obs = None
+
+        self.reset_counter = 0
+        self.died = False
+        self.reached_destination = False
+        self.to_target = 0
 
     def post_init(self):
         self.joint_dof_idx, _ = self.robot.find_joints(".*")
@@ -80,6 +86,7 @@ class RlAntController(ArtController):
             self.dof_pos_scaled,
             self.prev_potentials,
             self.potentials,
+            self.to_target,
         ) = compute_intermediate_values(
             self.targets,
             self.torso_position,
@@ -106,6 +113,7 @@ class RlAntController(ArtController):
                 normalize_angle(self.yaw),
                 normalize_angle(self.roll),
                 normalize_angle(self.angle_to_target),
+                self.to_target[:2],
                 self.up_proj,
                 self.heading_proj,
                 self.dof_pos_scaled,
@@ -145,27 +153,45 @@ class RlAntController(ArtController):
 
     def reset_idx(self):
         self.episode_length = 0
-        self.robot.reset()
-        joint_pos = self.robot.data.default_joint_pos
-        joint_vel = self.robot.data.default_joint_vel
-        default_root_state = self.robot.data.default_root_state
-        self.robot.write_root_link_pose_to_sim(default_root_state[:, :7])
-        self.robot.write_root_com_velocity_to_sim(default_root_state[:, 7:])
-        self.robot.write_joint_state_to_sim(joint_pos, joint_vel, None)
+        self.reset_counter += 1
+        soft_reset = self.reset_counter % 10 != 0
 
-        to_target = self.targets - default_root_state[:, :3]
-        to_target[:, 2] = 0.0
-        self.potentials = -torch.norm(to_target, p=2, dim=-1) / self.env_cfg.sim.dt
+        soft_robot_xy = self.robot.data.root_link_pos_w[:, :2]
+
+        # self.robot.reset()
+        # joint_pos = self.robot.data.default_joint_pos
+        # joint_vel = self.robot.data.default_joint_vel
+        # default_root_state = self.robot.data.default_root_state
+        # if soft_reset:
+        #     default_root_state[:, :2] = soft_robot_xy
+        # self.robot.write_root_link_pose_to_sim(default_root_state[:, :7])
+        # self.robot.write_root_com_velocity_to_sim(default_root_state[:, 7:])
+        # self.robot.write_joint_state_to_sim(joint_pos, joint_vel, None)
+
+        self.sample_next_goal()
+
+        # to_target = self.targets - default_root_state[:, :3]
+        # to_target[:, 2] = 0.0
+        # self.potentials = -torch.norm(to_target, p=2, dim=-1) / self.env_cfg.sim.dt
 
         self._compute_intermediate_values()
 
         self.robot.write_data_to_sim()
 
+    def sample_next_goal(self):
+
+        current_root_pos_w = self.robot.data.root_link_pos_w[0]
+        self.targets = current_root_pos_w + torch.randn_like(current_root_pos_w) * 10.0
+        assert self.targets.shape == (3,)
+
+        self.targets[2] = 0.0
+
 
 @torch.jit.script
 def compute_rewards(
         actions: torch.Tensor,
-        reset_terminated: torch.Tensor,
+        died: torch.Tensor,
+        reached_destination: torch.Tensor,
         up_weight: float,
         heading_weight: float,
         heading_proj: torch.Tensor,
@@ -178,6 +204,7 @@ def compute_rewards(
         energy_cost_scale: float,
         dof_vel_scale: float,
         death_cost: float,
+        success_reward: float,
         alive_reward_scale: float,
         motor_effort_ratio: torch.Tensor,
 ):
@@ -208,13 +235,17 @@ def compute_rewards(
             progress_reward_scale * progress_reward
             + alive_reward
             + up_reward
-            + heading_reward
+            # + heading_reward
             - actions_cost_scale * actions_cost
             - energy_cost_scale * electricity_cost
             - dof_at_limit_cost_scale * dof_at_limit_cost
     )
     # adjust reward for fallen agents
-    total_reward = torch.where(reset_terminated, torch.ones_like(total_reward) * death_cost, total_reward)
+    total_reward = torch.where(died, torch.ones_like(total_reward) * death_cost, total_reward)
+
+    # adjust reward for agents that reached the destination
+    total_reward = torch.where(reached_destination, torch.ones_like(total_reward) * success_reward, total_reward)
+
     return total_reward
 
 
@@ -267,6 +298,7 @@ def compute_intermediate_values(
         dof_pos_scaled,
         prev_potentials,
         potentials,
+        to_target
     )
 
 
