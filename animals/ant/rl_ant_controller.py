@@ -2,7 +2,7 @@ import math
 
 import omni.isaac.core.utils.torch as torch_utils
 import torch
-from omni.isaac.core.utils.torch.rotations import compute_heading_and_up, compute_rot, quat_conjugate
+from omni.isaac.core.utils.torch.rotations import compute_heading_and_up, compute_rot, quat_conjugate, normalize_angle
 from omni.isaac.lab.envs.utils.spaces import sample_space, spec_to_gym_space
 
 from animals.ant.ant_env_cfg import AntEnvCfg
@@ -18,6 +18,7 @@ class RlAntController(ArtController):
         super().__init__(parent_env, env_cfg.robot)
         self.env = parent_env
         self.env_cfg = env_cfg
+        self.num_envs = 1
 
         self.observation_space = spec_to_gym_space(self.env_cfg.observation_space)
         self.action_space = spec_to_gym_space(self.env_cfg.action_space)
@@ -32,16 +33,19 @@ class RlAntController(ArtController):
         self.joint_gears = torch.tensor(env_cfg.joint_gears, dtype=torch.float32, device=self.sim.device)
         self.motor_effort_ratio = torch.ones_like(self.joint_gears, device=self.sim.device)
 
-        self.potentials = torch.zeros(1, dtype=torch.float32, device=self.sim.device)
+        self.potentials = torch.zeros(self.num_envs, dtype=torch.float32, device=self.sim.device)
         self.prev_potentials = torch.zeros_like(self.potentials)
-        self.targets = torch.tensor([1000, 0, 0], dtype=torch.float32, device=self.sim.device)
-        assert self.targets.shape == (3,)
+        self.targets = torch.tensor([1000, 0, 0], dtype=torch.float32, device=self.sim.device).repeat(
+            (self.num_envs, 1)
+        )
         self.start_rotation = torch.tensor([1, 0, 0, 0], device=self.sim.device, dtype=torch.float32)
-        self.up_vec = torch.tensor([0, 0, 1], dtype=torch.float32, device=self.sim.device)
+        self.up_vec = torch.tensor([0, 0, 1], dtype=torch.float32, device=self.sim.device).repeat((self.num_envs, 1))
         # heading_mark = [1, 0, 0]
         heading_mark = [0, 1, 0]
-        self.heading_vec = torch.tensor(heading_mark, dtype=torch.float32, device=self.sim.device)
-        self.inv_start_rot = quat_conjugate(self.start_rotation)
+        self.heading_vec = torch.tensor(heading_mark, dtype=torch.float32, device=self.sim.device).repeat(
+            (self.num_envs, 1)
+        )
+        self.inv_start_rot = quat_conjugate(self.start_rotation).repeat((self.num_envs, 1))
         self.basis_vec0 = self.heading_vec.clone()
         self.basis_vec1 = self.up_vec.clone()
 
@@ -54,10 +58,10 @@ class RlAntController(ArtController):
         self.joint_dof_idx = None
         self.last_obs = None
 
-        self.reset_counter = 0
-        self.died = False
-        self.reached_destination = False
-        self.to_target = 0
+        self.reset_counter = torch.zeros(self.num_envs, dtype=torch.int32, device=self.sim.device)
+        self.died = torch.zeros(self.num_envs, dtype=torch.bool, device=self.sim.device)
+        self.reached_destination = torch.zeros(self.num_envs, dtype=torch.bool, device=self.sim.device)
+        self.to_target = torch.zeros_like(self.targets)
 
     def post_init(self):
         self.joint_dof_idx, _ = self.robot.find_joints(".*")
@@ -68,9 +72,9 @@ class RlAntController(ArtController):
         self.robot.write_data_to_sim()
 
     def _compute_intermediate_values(self):
-        self.torso_position, self.torso_rotation = self.robot.data.root_link_pos_w.squeeze(), self.robot.data.root_link_quat_w.squeeze()
-        self.velocity, self.ang_velocity = self.robot.data.root_com_lin_vel_w.squeeze(), self.robot.data.root_com_ang_vel_w.squeeze()
-        self.dof_pos, self.dof_vel = self.robot.data.joint_pos.squeeze(), self.robot.data.joint_vel.squeeze()
+        self.torso_position, self.torso_rotation = self.robot.data.root_link_pos_w, self.robot.data.root_link_quat_w
+        self.velocity, self.ang_velocity = self.robot.data.root_com_lin_vel_w, self.robot.data.root_com_ang_vel_w
+        self.dof_pos, self.dof_vel = self.robot.data.joint_pos, self.robot.data.joint_vel
 
         (
             self.up_proj,
@@ -107,21 +111,21 @@ class RlAntController(ArtController):
     def update_obs(self):
         obs = torch.cat(
             (
-                self.torso_position[2].unsqueeze(0),
+                self.torso_position[:, 2].view(-1, 1),
                 self.vel_loc,
                 (self.angvel_loc * self.env_cfg.angular_velocity_scale),
-                normalize_angle(self.yaw),
-                normalize_angle(self.roll),
-                normalize_angle(self.angle_to_target),
-                self.to_target[:2],
-                self.up_proj,
-                self.heading_proj,
+                normalize_angle(self.yaw).unsqueeze(-1),
+                normalize_angle(self.roll).unsqueeze(-1),
+                normalize_angle(self.angle_to_target).unsqueeze(-1),
+                self.to_target[:, :2],
+                self.up_proj.unsqueeze(-1),
+                self.heading_proj.unsqueeze(-1),
                 self.dof_pos_scaled,
                 self.dof_vel * self.env_cfg.dof_vel_scale,
-                self.actions.squeeze(0),
+                self.actions,
             ),
             dim=-1,
-        ).unsqueeze(0)
+        )
         self.last_obs = obs
 
     def get_rewards(self, reset_terminated):
@@ -148,15 +152,15 @@ class RlAntController(ArtController):
     def get_dones(self):
         self._compute_intermediate_values()
         time_out = self.episode_length >= self.max_episode_length - 1
-        died = self.torso_position[2] < self.env_cfg.termination_height
+        died = self.torso_position[:, 2] < self.env_cfg.termination_height
         return died, time_out
 
     def reset_idx(self):
         self.episode_length = 0
         self.reset_counter += 1
-        soft_reset = self.reset_counter % 10 != 0
+        # soft_reset = self.reset_counter % 10 != 0
 
-        soft_robot_xy = self.robot.data.root_link_pos_w[:, :2]
+        # soft_robot_xy = self.robot.data.root_link_pos_w[:, :2]
 
         # self.robot.reset()
         # joint_pos = self.robot.data.default_joint_pos
@@ -179,12 +183,11 @@ class RlAntController(ArtController):
         self.robot.write_data_to_sim()
 
     def sample_next_goal(self):
-
-        current_root_pos_w = self.robot.data.root_link_pos_w[0]
+        current_root_pos_w = self.robot.data.root_link_pos_w
         self.targets = current_root_pos_w + torch.randn_like(current_root_pos_w) * 10.0
-        assert self.targets.shape == (3,)
+        assert self.targets.shape == (1, 3)
 
-        self.targets[2] = 0.0
+        self.targets[:, 2] = 0.0
 
 
 @torch.jit.script
@@ -249,7 +252,7 @@ def compute_rewards(
     return total_reward
 
 
-@torch.jit.script
+# @torch.jit.script
 def compute_intermediate_values(
         targets: torch.Tensor,
         torso_position: torch.Tensor,
@@ -267,20 +270,19 @@ def compute_intermediate_values(
         dt: float,
 ):
     to_target = targets - torso_position
-    to_target[2] = 0.0
+    to_target[:, 2] = 0.0
 
     torso_quat, up_proj, heading_proj, up_vec, heading_vec = compute_heading_and_up(
-        torso_rotation.unsqueeze(0), inv_start_rot.unsqueeze(0), to_target.unsqueeze(0), basis_vec0.unsqueeze(0),
-        basis_vec1.unsqueeze(0), 2
+        torso_rotation, inv_start_rot, to_target, basis_vec0, basis_vec1, 2
     )
-    torso_quat = torso_quat.squeeze()
     vel_loc, angvel_loc, roll, pitch, yaw, angle_to_target = compute_rot(
-        torso_quat.unsqueeze(0), velocity.unsqueeze(0), ang_velocity.unsqueeze(0), targets.unsqueeze(0),
-        torso_position.unsqueeze(0)
+        torso_quat, velocity, ang_velocity, targets, torso_position
     )
 
     dof_pos_scaled = torch_utils.maths.unscale(dof_pos, dof_lower_limits, dof_upper_limits)
 
+    to_target = targets - torso_position
+    to_target[:, 2] = 0.0
     prev_potentials[:] = potentials
     potentials = -torch.norm(to_target, p=2, dim=-1) / dt
 
@@ -289,8 +291,8 @@ def compute_intermediate_values(
         heading_proj,
         up_vec,
         heading_vec,
-        vel_loc.squeeze(0),
-        angvel_loc.squeeze(0),
+        vel_loc,
+        angvel_loc,
         roll,
         pitch,
         yaw,
@@ -298,9 +300,5 @@ def compute_intermediate_values(
         dof_pos_scaled,
         prev_potentials,
         potentials,
-        to_target
+        to_target,
     )
-
-
-def normalize_angle(x: torch.Tensor) -> torch.Tensor:
-    return torch.atan2(torch.sin(x), torch.cos(x))
