@@ -1,13 +1,9 @@
-import math
-
-import omni.isaac.core.utils.torch as torch_utils
 import torch
-from omni.isaac.core.utils.torch.rotations import compute_heading_and_up, compute_rot, quat_conjugate, normalize_angle
+from omni.isaac.core.utils.torch.rotations import quat_conjugate
 from omni.isaac.lab.envs.utils.spaces import sample_space, spec_to_gym_space
 from omni.isaac.lab_tasks.direct.crab.crab_env import CrabEnvCfg
 from omni.isaac.lab_tasks.direct.locomotion.locomotion_env import LocomotionEnv
 
-from animals.ant.ant_env_cfg import AntEnvCfg
 from animals.art_controller import ArtController
 from sim.isaac_env import IsaacEnv
 
@@ -96,9 +92,21 @@ class RlAntController(ArtController, LocomotionEnv):
         died = self.torso_position[:, 2] < self.env_cfg.termination_height
         return died, time_out
 
-    def reset_idx(self):
-        self.episode_length_buf[:] = 0
-        self.reset_counter[:] += 1
-        self.sample_next_goal()
+    # This function is called when the crab reaches it's destination
+    # it is used to sample the next goal
+    def _reset_idx(self, env_ids: torch.Tensor | None = None):
+        if env_ids is None or len(env_ids) == self.num_envs:
+            env_ids = self.robot._ALL_INDICES
+        self.episode_length_buf[env_ids] = 0
+        self.reset_counter[env_ids] += 1
+        self.sample_next_goal(env_ids)
         self._compute_intermediate_values()
         self.robot.write_data_to_sim()
+
+    # Calling reset does a hard reset on all robots
+    def reset(self):
+        # reset all joint states
+        super().reset()
+
+        self._reset_idx()
+        self.update_obs()

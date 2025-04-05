@@ -55,16 +55,14 @@ class PretrainedRlAntController(RlAntController):
 
         self.reset_terminated, self.reset_time_outs = self.get_dones()
         self.reset_buf = self.reset_terminated or self.reset_time_outs
+        reset_env_ids = self.reset_buf.nonzero(as_tuple=False).squeeze(-1)
 
         # -- reset env if terminated/timed-out and log the episode information
-        if self.reset_buf.any(): self.reset_idx()
+        if len(reset_env_ids) > 0:
+            self._reset_idx(reset_env_ids)
 
         self.update_obs()
 
     def reset(self):
-        # reset state of scene
-        self.reset_idx()
-
-        # return observations
-        self.update_obs()
+        super().reset()
         self.agent.init(self.last_obs)
