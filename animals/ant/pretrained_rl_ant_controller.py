@@ -51,13 +51,13 @@ class PretrainedRlAntController(RlAntController):
 
     def post_decimation(self):
         # -- update env counters (used for curriculum generation)
-        self.episode_length += 1  # step in current episode
+        self.episode_length_buf += 1  # step in current episode
 
         self.reset_terminated, self.reset_time_outs = self.get_dones()
         self.reset_buf = self.reset_terminated or self.reset_time_outs
 
         # -- reset env if terminated/timed-out and log the episode information
-        if self.reset_buf: self.reset_idx()
+        if self.reset_buf.any(): self.reset_idx()
 
         self.update_obs()
 
