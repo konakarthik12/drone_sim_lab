@@ -32,6 +32,6 @@ while not exit_watcher.pressed:
     drone_action = np.array(env.drone_controller.backend.input_reference())
     commands.append(np.append(drone_action, mani_action))
 
-save_pickle("episode_actions.pkl", commands)
+save_pickle("recordings/output/episode_actions.pkl", commands)
 print("Commands saved to episode_actions.pkl")
 env.close()

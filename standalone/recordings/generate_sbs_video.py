@@ -23,7 +23,7 @@ assert len(images_1) == len(images_2), "Frame lists must have the same length"
 assert (height_1, width_1) == (height_2, width_2), "Frame dimensions must match"
 
 # Define video writer (double the width for side-by-side effect)
-output_path = "output_video.mp4"
+output_path = "output/sbs.mp4"
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Codec for MP4 format
 fps = 30
 video_writer = cv2.VideoWriter(output_path, fourcc, fps, (width_1 * 2, height_1))
