@@ -1,34 +1,20 @@
-from omni.isaac.lab_tasks.direct.crab.crab_env import CrabEnvCfg
-from omni.isaac.lab_tasks.utils import load_cfg_from_registry
+from omni.isaac.lab_tasks.direct.ant.ant_env import AntEnvCfg
 
-from animals.ant.rl_ant_controller import RlAntController
-from animals.crab.crab_usd_cfg import get_crab_cfg
+from animals.crab.crab_rl_env import crab_env_cfg, crab_task_cfg
+from animals.rl_agent_controller import RlAgentController
 from sim.isaac_env import IsaacEnv
 
-# TASK_NAME = "Isaac-Ant-Direct-v0"
-# RESUME_PATH = "/home/kkona/Documents/research/drone_sim_lab/assets/animals/ant_direct_policy.pth"
-TASK_NAME = "Isaac-Crab-Direct-v0"
-RESUME_PATH = "/home/kkona/Documents/research/drone_sim_lab/assets/animals/crab/crab_direct.pth"
 
-
-def default_rl_env():
-    cfg = CrabEnvCfg()
-    cfg.robot = get_crab_cfg(init_pos=(6.0, 0.0, None))  # Keep the z-position same as training environment
-
-    return cfg
-
-
-class PretrainedRlAntController(RlAntController):
-    def __init__(self, parent_env: IsaacEnv, env_cfg=default_rl_env()):
+class PretrainedRlAgentController(RlAgentController):
+    def __init__(self, parent_env: IsaacEnv,
+                 env_cfg: AntEnvCfg = crab_env_cfg(),
+                 task_cfg: (str, str) = crab_task_cfg()):
         env_cfg.sim.device = parent_env.sim.device
         super().__init__(parent_env, env_cfg)
         self.env_cfg = env_cfg
-        from animals.ant.agent import Agent
+        from animals.agent import Agent
 
-        agent_cfg = load_cfg_from_registry(TASK_NAME, "rl_games_cfg_entry_point")
-        agent_cfg['params']['config']['device'] = env_cfg.sim.device
-        agent_cfg['params']['config']['device_name'] = env_cfg.sim.device
-        self.agent = Agent(agent_cfg, self.observation_space, self.action_space, RESUME_PATH)
+        self.agent = Agent(self, task_cfg)
 
         self.current_step = 0
         self.last_obs = None
