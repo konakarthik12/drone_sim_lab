@@ -29,7 +29,7 @@ for _ in range(3):
     # decimation = 4
     for _ in range(4):
         env.step(None)
-assert sha1_array(env.agent_controller.last_obs) == "3cbeb8f5a1e73b228b90ffdbca2a073b0557bedd"
+assert sha1_array(env.animal_controller.last_obs) == "3cbeb8f5a1e73b228b90ffdbca2a073b0557bedd"
 
 env.close()
 app.close()

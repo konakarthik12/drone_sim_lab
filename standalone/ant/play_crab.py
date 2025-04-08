@@ -1,4 +1,4 @@
-from animals.pretrained_rl_agent_controller import PretrainedRlAgentController
+from animals.pretrained_rl_agent_controller import PretrainedRlAnimalController
 from sim.app import init_app, get_app
 
 init_app(headless=False)
@@ -23,7 +23,7 @@ class CrabEnv(IsaacEnv):
         super().__init__(layout="water")
 
         self.sim = self.world
-        self.controller = PretrainedRlAgentController(parent_env=self, env_cfg=default_rl_env())
+        self.controller = PretrainedRlAnimalController(parent_env=self, env_cfg=default_rl_env())
 
     def reset(self, seed=None, options=None):
         super().reset(seed, options)

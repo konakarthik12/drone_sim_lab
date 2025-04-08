@@ -1,11 +1,11 @@
 from omni.isaac.lab_tasks.direct.ant.ant_env import AntEnvCfg
 
 from animals.crab.crab_rl_env import crab_env_cfg, crab_task_cfg
-from animals.rl_agent_controller import RlAgentController
+from animals.rl_agent_controller import RlAnimalController
 from sim.isaac_env import IsaacEnv
 
 
-class PretrainedRlAgentController(RlAgentController):
+class PretrainedRlAnimalController(RlAnimalController):
     def __init__(self, parent_env: IsaacEnv,
                  env_cfg: AntEnvCfg = crab_env_cfg(),
                  task_cfg: (str, str) = crab_task_cfg()):

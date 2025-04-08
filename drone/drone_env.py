@@ -2,7 +2,7 @@ from typing import Any
 
 from gymnasium.core import ObsType
 
-from animals.pretrained_rl_agent_controller import PretrainedRlAgentController
+from animals.pretrained_rl_agent_controller import PretrainedRlAnimalController
 from drone.drone_controller import DroneController
 from sim.isaac_env import IsaacEnv
 
@@ -11,7 +11,7 @@ class DroneEnv(IsaacEnv):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.drone_controller = DroneController(parent_env=self)
-        self.animal_controller = PretrainedRlAgentController(parent_env=self)
+        self.animal_controller = PretrainedRlAnimalController(parent_env=self)
 
     def step(self, action):
         self.animal_controller.pre_step()

@@ -9,16 +9,16 @@ class AgentEnv(IsaacEnv):
         super().__init__(layout="grid")
 
         self.sim = self.world
-        self.agent_controller = PretrainedRlAgentController(parent_env=self, cfg=cfg)
+        self.animal_controller = PretrainedRlAgentController(parent_env=self, cfg=cfg)
 
     def reset(self, seed=None, options=None):
         super().reset(seed, options)
-        self.agent_controller.reset()
+        self.animal_controller.reset()
 
     def step(self, _):
-        self.agent_controller.pre_step()
+        self.animal_controller.pre_step()
         super().step(None)
-        self.agent_controller.post_step()
+        self.animal_controller.post_step()
 
     def post_init(self):
-        self.agent_controller.post_init()
+        self.animal_controller.post_init()

@@ -15,7 +15,7 @@ from sim.isaac_env import IsaacEnv
 # Also, I chose not to reset the crabs in the reset_idx function, because it looks
 # jarring when the crab teleports while the drone is trying to capture it
 
-class RlAgentController(ArtController, LocomotionEnv):
+class RlAnimalController(ArtController, LocomotionEnv):
     @property
     def num_envs(self) -> int:
         """The number of instances of the environment that are running."""

@@ -6,7 +6,7 @@ from rl_games.common.player import BasePlayer
 from rl_games.common.vecenv import IVecEnv
 from rl_games.torch_runner import Runner
 
-from animals.rl_agent_controller import RlAgentController
+from animals.rl_agent_controller import RlAnimalController
 
 
 def register_rl_games_env(observation_space, action_space):
@@ -34,7 +34,7 @@ NUM_ENVS = 1  # number of environments to run in parallel
 
 class Agent:
     def __init__(self,
-                 rl_controller: RlAgentController,
+                 rl_controller: RlAnimalController,
                  task_cfg: (str, str)):
         """
         Initializes the RL agent with the given configuration.
