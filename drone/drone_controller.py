@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 from pegasus.simulator.logic import PegasusInterface
 from pegasus.simulator.logic.backends import BackendConfig
@@ -7,7 +9,7 @@ from scipy.spatial.transform import Rotation
 from drone.drone_utils.pegasus_backend import PegasusBackend
 from drone.manipulators import Manipulators
 from sim.controller import Controller
-
+from utils import get_project_path
 
 class DirectBackend(PegasusBackend):
     def __init__(self, config=BackendConfig()):
@@ -55,7 +57,7 @@ class DroneController(Controller):
         # noinspection PyTypeChecker
         self.drone = Multirotor(
             self.stage_prefix,
-            "/home/kkona/Documents/research/drone_sim_lab/assets/drones/iris_with_arm.usd",
+            os.path.join(get_project_path(), "assets", "drones", "iris_with_arm.usd"), #"assets/drones/iris_with_arm.usd",
             0,
             init_pos,
             Rotation.from_euler("XYZ", init_rot, degrees=True).as_quat(),

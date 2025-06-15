@@ -1,10 +1,13 @@
 from typing import Any, SupportsFloat
+import os
 
 import gymnasium
 from gymnasium.core import ObsType, ActType
 from omni.isaac.lab.sim import GroundPlaneCfg
 from omni.isaac.lab.sim import DomeLightCfg
 import omni.isaac.core.utils.torch as torch_utils
+
+from utils import get_project_path
 
 SIM_DT = 1 / 250
 
@@ -62,7 +65,8 @@ class IsaacEnv(gymnasium.Env):
             # enable_gpu_dynamics()
         elif layout == "grid":
             cfg = sim_utils.UsdFileCfg(
-                usd_path=f"/home/kkona/Documents/research/drone_sim_lab/assets/worlds/grid_with_stand.usd")
+                usd_path= os.path.join(get_project_path(), "assets/worlds/grid_with_stand.usd"),
+            )
             cfg.func("/World/layout", cfg)
         else:
             raise ValueError(f"Unknown layout type {layout}")

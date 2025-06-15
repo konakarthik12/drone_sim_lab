@@ -1,7 +1,11 @@
 import logging
+import os
+
 
 from carb.input import GamepadEvent
 
+def get_project_path():
+    return os.path.dirname(os.path.abspath(__file__))
 
 def enable_gpu_dynamics():
     from omni.physx import acquire_physx_interface

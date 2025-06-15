@@ -1,9 +1,13 @@
+import os
+
 from omni.isaac.lab_tasks.direct.crab.crab_env import CrabEnvCfg
 
 from animals.crab.crab_usd_cfg import get_crab_cfg
+from utils import get_project_path
+
 
 CRAB_TASK_NAME = "Isaac-Crab-Direct-v0"
-CRAB_RESUME_PATH = "/home/kkona/Documents/research/drone_sim_lab/assets/animals/crab/crab_direct.pth"
+CRAB_RESUME_PATH = os.path.join(get_project_path(), "assets", "animals", "crab", "crab_direct.pth")  # "/data/assets/animals/crab/crab_direct.pth"
 
 
 def crab_env_cfg():
