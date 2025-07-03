@@ -51,6 +51,11 @@ This guide will help you set up and run the drone teleoperation demo using Isaac
 
 ---
 
+### Creating and Training New Animal Environment
+* Details [here](docs/training_rl.md)
+
+---
+
 ### Running the Drone Teleop Demo
 
 1. **Start QGroundControl:**
