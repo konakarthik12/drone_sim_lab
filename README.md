@@ -46,7 +46,7 @@ This guide will help you set up and run the drone teleoperation demo using Isaac
     ```
 
 4. **Download and Set Up QGroundControl:**  
-   Download QGroundControl from [here](https://docs.qgroundcontrol.com/master/en/getting_started/download_and_install.html).  
+   Download QGroundControl from [here](https://https://docs.qgroundcontrol.com/master/en/qgc-user-guide/getting_started/download_and_install.html).  
    You will use this software to control the drone (joystick recommended).
 
 ---
