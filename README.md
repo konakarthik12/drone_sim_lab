@@ -4,13 +4,12 @@
 
 - **Project Website:** [https://aam-seals.umd.edu](https://aam-seals.umd.edu)
 - **arXiv Paper:** [AAM-SEALS: Developing Aerial-Aquatic Manipulators in SEa, Air, and Land Simulator](https://arxiv.org/abs/2412.19744)
-- **Demo Video:** [Drone catches crab (mp4)](media/demo_drone_catches_crab.mp4)
+- **Demo Video:** 
 
-<video src="media/demo_drone_catches_crab.mp4" controls width="480" poster="https://aam-seals.umd.edu/media/images/crab_catch_poster.jpg">
-  Your browser does not support the video tag. [Download the video](media/demo_drone_catches_crab.mp4).
-</video>
+https://github.com/user-attachments/assets/823106d4-91c0-406b-bede-2292fa5c1f7b
 
-*Demo: Drone uses its manipulator to catch a crab in a photorealistic simulated environment. See the video above for a live demonstration of aerial-aquatic manipulation!*
+
+*Demo: Drone uses its manipulator to catch a crab. See the video above for a live demonstration of aerial-aquatic manipulation!*
 
 ## Drone Teleop Simulation Setup Guide
 
