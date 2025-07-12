@@ -1,3 +1,17 @@
+# AAM-SEALS: Drone Simulation Lab
+
+**AAM-SEALS** is a research platform for developing and simulating aerial-aquatic manipulators (AAMs) that can operate across sea, air, and land. The simulator supports photorealistic transitions and high-fidelity physics for both aerial and aquatic environments, enabling research in multi-domain robotics, manipulation, and learning.
+
+- **Project Website:** [https://aam-seals.umd.edu](https://aam-seals.umd.edu)
+- **arXiv Paper:** [AAM-SEALS: Developing Aerial-Aquatic Manipulators in SEa, Air, and Land Simulator](https://arxiv.org/abs/2412.19744)
+- **Demo Video:** [Drone catches crab (mp4)](media/demo_drone_catches_crab.mp4)
+
+<video src="media/demo_drone_catches_crab.mp4" controls width="480" poster="https://aam-seals.umd.edu/media/images/crab_catch_poster.jpg">
+  Your browser does not support the video tag. [Download the video](media/demo_drone_catches_crab.mp4).
+</video>
+
+*Demo: Drone uses its manipulator to catch a crab in a photorealistic simulated environment. See the video above for a live demonstration of aerial-aquatic manipulation!*
+
 ## Drone Teleop Simulation Setup Guide
 
 This guide will help you set up and run the drone teleoperation demo using Isaac Sim, Pegasus, and QGroundControl.
